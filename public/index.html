@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PackSmart — AI Travel Packing Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🧳</span>
+        <span class="logo-text">PackSmart</span>
+      </div>
+      <p class="header-tagline">AI-powered packing for smarter travel</p>
+    </div>
+  </header>
+
+  <!-- Step Progress Bar -->
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-inner">
+      <div class="steps-row">
+        <div class="step-indicator active" data-step="1">
+          <div class="step-dot"><span>1</span></div>
+          <div class="step-label">Trip Details</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-indicator" data-step="2">
+          <div class="step-dot"><span>2</span></div>
+          <div class="step-label">My Wardrobe</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-indicator" data-step="3">
+          <div class="step-dot"><span>3</span></div>
+          <div class="step-label">Analysis</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-indicator" data-step="4">
+          <div class="step-dot"><span>4</span></div>
+          <div class="step-label">Outfits</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- Step 1: Trip Details -->
+    <section class="step-section active" id="step-1">
+      <div class="card">
+        <h2 class="section-title">Where are you headed?</h2>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="destination">Destination</label>
+            <input type="text" id="destination" placeholder="e.g. Barcelona, Spain" />
+          </div>
+          <div class="form-group">
+            <label for="duration">Trip Duration (days)</label>
+            <input type="number" id="duration" min="1" max="365" placeholder="7" />
+          </div>
+          <div class="form-group">
+            <label for="climate">Climate</label>
+            <select id="climate">
+              <option value="">Select climate…</option>
+              <option>Tropical</option>
+              <option>Arid/Desert</option>
+              <option>Mediterranean</option>
+              <option>Temperate</option>
+              <option>Cool/Rainy</option>
+              <option>Cold</option>
+              <option>Arctic</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="season">Season</label>
+            <select id="season">
+              <option value="">Select season…</option>
+              <option>Spring</option>
+              <option>Summer</option>
+              <option>Autumn</option>
+              <option>Winter</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Activities &amp; Interests</label>
+          <div class="pill-grid" id="interests-grid">
+            <label class="pill"><input type="checkbox" value="Beach" /> 🏖️ Beach</label>
+            <label class="pill"><input type="checkbox" value="Hiking" /> 🥾 Hiking</label>
+            <label class="pill"><input type="checkbox" value="City Sightseeing" /> 🏛️ City Sightseeing</label>
+            <label class="pill"><input type="checkbox" value="Business" /> 💼 Business</label>
+            <label class="pill"><input type="checkbox" value="Fine Dining" /> 🍽️ Fine Dining</label>
+            <label class="pill"><input type="checkbox" value="Nightlife" /> 🎉 Nightlife</label>
+            <label class="pill"><input type="checkbox" value="Adventure Sports" /> 🪂 Adventure Sports</label>
+            <label class="pill"><input type="checkbox" value="Arts & Culture" /> 🎨 Arts &amp; Culture</label>
+            <label class="pill"><input type="checkbox" value="Spa & Wellness" /> 🧘 Spa &amp; Wellness</label>
+            <label class="pill"><input type="checkbox" value="Snow Sports" /> ⛷️ Snow Sports</label>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Laundromat Access</label>
+            <div class="toggle-wrap">
+              <label class="toggle">
+                <input type="checkbox" id="laundromat" />
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label" id="laundromat-label">No</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Luggage Size</label>
+          <div class="luggage-grid" id="luggage-grid">
+            <label class="luggage-card">
+              <input type="radio" name="luggage" value="Carry-on" />
+              <span class="luggage-icon">🎒</span>
+              <span class="luggage-name">Carry-on</span>
+              <span class="luggage-desc">≈ 20L</span>
+            </label>
+            <label class="luggage-card">
+              <input type="radio" name="luggage" value="Small" />
+              <span class="luggage-icon">🧳</span>
+              <span class="luggage-name">Small</span>
+              <span class="luggage-desc">≈ 35L</span>
+            </label>
+            <label class="luggage-card">
+              <input type="radio" name="luggage" value="Medium" />
+              <span class="luggage-icon">🧳</span>
+              <span class="luggage-name">Medium</span>
+              <span class="luggage-desc">≈ 55L</span>
+            </label>
+            <label class="luggage-card">
+              <input type="radio" name="luggage" value="Large" />
+              <span class="luggage-icon">🧳</span>
+              <span class="luggage-name">Large</span>
+              <span class="luggage-desc">≈ 75L</span>
+            </label>
+            <label class="luggage-card">
+              <input type="radio" name="luggage" value="Extra Large" />
+              <span class="luggage-icon">🧳</span>
+              <span class="luggage-name">Extra Large</span>
+              <span class="luggage-desc">≈ 100L+</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-primary" onclick="app.goToStep(2)">Continue to Wardrobe →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2: My Wardrobe -->
+    <section class="step-section" id="step-2">
+      <div class="card">
+        <h2 class="section-title">Add Your Clothing Items</h2>
+        <p class="section-desc">Photograph or upload each item you're considering packing. Our AI will identify and catalog each piece.</p>
+
+        <div class="add-item-buttons">
+          <button class="btn-outline" onclick="document.getElementById('camera-input').click()">
+            📷 Take Photo
+          </button>
+          <button class="btn-outline" onclick="document.getElementById('file-input').click()">
+            📁 Upload Photo
+          </button>
+          <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="app.handleFileInput(this)" />
+          <input type="file" id="file-input" accept="image/*" style="display:none" onchange="app.handleFileInput(this)" />
+        </div>
+
+        <div id="wardrobe-empty" class="empty-state">
+          <div class="empty-icon">👕</div>
+          <p>No items added yet. Start by taking a photo or uploading an image of a clothing item.</p>
+        </div>
+
+        <div id="wardrobe-grid" class="wardrobe-grid" style="display:none"></div>
+
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="app.goToStep(1)">← Back</button>
+          <button class="btn-primary" onclick="app.goToStep(3)">Analyze Packing →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: Packing Analysis -->
+    <section class="step-section" id="step-3">
+      <div class="card">
+        <h2 class="section-title">Packing Analysis</h2>
+        <div id="analysis-content">
+          <div class="empty-state">
+            <div class="empty-icon">📊</div>
+            <p>Your analysis will appear here once you proceed from the Wardrobe step.</p>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="app.goToStep(2)">← Back to Wardrobe</button>
+          <button class="btn-primary" onclick="app.goToStep(4)">See Outfit Plans →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 4: Outfit Planner -->
+    <section class="step-section" id="step-4">
+      <div class="card">
+        <h2 class="section-title">Your Outfit Plans</h2>
+        <div id="outfits-content">
+          <div class="empty-state">
+            <div class="empty-icon">👗</div>
+            <p>Your outfit plans will appear here.</p>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="app.goToStep(3)">← Back to Analysis</button>
+          <button class="btn-primary" onclick="app.startOver()">Start New Trip ✈️</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay" style="display:none">
+    <div class="loading-box">
+      <div class="spinner"></div>
+      <p id="loading-text">Analyzing…</p>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" style="display:none"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
