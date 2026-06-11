@@ -694,3 +694,28 @@ select:focus {
 }
 
 .toast.error { background: var(--danger); }
+
+/* ===== Printable Report ===== */
+.print-report { display: none; }
+
+@media print {
+  .app-header, .progress-bar-wrap, .loading-overlay, .toast,
+  .step-section, .main-content > *:not(#print-report) { display: none !important; }
+
+  .print-report {
+    display: block !important;
+    color: #000;
+    font-family: 'Inter', sans-serif;
+    padding: 20px;
+  }
+
+  .print-report h1 { font-size: 1.6rem; margin-bottom: 16px; }
+  .print-report h2 { font-size: 1.2rem; margin: 20px 0 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  .print-report h3 { font-size: 1rem; margin: 14px 0 4px; }
+  .print-report p, .print-report li { font-size: 0.9rem; line-height: 1.5; }
+  .print-report ul { margin-left: 20px; margin-bottom: 8px; }
+  .report-table { border-collapse: collapse; margin-bottom: 12px; width: 100%; }
+  .report-table td { padding: 4px 8px; border: 1px solid #ddd; font-size: 0.88rem; }
+  .report-table td:first-child { font-weight: 600; width: 35%; }
+  .report-outfit { margin-bottom: 10px; page-break-inside: avoid; }
+}

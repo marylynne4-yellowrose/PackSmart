@@ -127,7 +127,10 @@ app.post('/api/get-outfits', async (req, res) => {
     if (!items || !tripParams) return res.status(400).json({ error: 'items and tripParams are required' });
 
     const itemsText = items.map((item, i) => `${i + 1}. ${JSON.stringify(item)}`).join('\n');
-    const prompt = `You are a professional stylist helping plan outfits for a trip.
+    const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+    const prompt = `You are a professional stylist with up-to-date knowledge of current fashion trends, helping plan outfits for a trip.
+
+Today's date: ${currentDate}
 
 Trip details:
 - Destination: ${tripParams.destination}
@@ -140,7 +143,7 @@ Trip details:
 Available clothing items (numbered):
 ${itemsText}
 
-Create outfit combinations that reuse items across multiple days. Return a JSON object with exactly these fields:
+Create outfit combinations that reuse items across multiple days. For each outfit, factor in current fashion trends relevant to the specific occasion/activity and destination (e.g. what's trending right now for business travel, beach days, city sightseeing, fine dining, or nightlife) — and reflect that in the styling description (think layering choices, accessory pairings, color combinations, and silhouettes that are currently popular). Only suggest trend-driven tweaks using items the traveler already has, or as an optional accessory note. Return a JSON object with exactly these fields:
 {
   "outfits": [
     {

@@ -149,10 +149,16 @@ function renderStep(step) {
 
 // ===== Step 2: Wardrobe =====
 async function handleFileInput(input) {
-  const file = input.files[0];
-  if (!file) return;
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
   input.value = '';
 
+  for (const file of files) {
+    await processImageFile(file);
+  }
+}
+
+async function processImageFile(file) {
   let dataUrl;
   try {
     dataUrl = await readFile(file);
@@ -365,6 +371,74 @@ function renderOutfits(data) {
   `;
 }
 
+// ===== Printable Report =====
+function downloadReport() {
+  if (!state.packingAnalysis || !state.outfits) {
+    showToast('Please complete the analysis and outfit steps first.', true);
+    return;
+  }
+
+  const p = state.tripParams;
+  const data = state.packingAnalysis;
+  const outfitsData = state.outfits;
+  const missing = data.missing || [];
+  const excessive = data.excessive || [];
+  const tips = data.tips || [];
+  const outfits = outfitsData.outfits || [];
+  const stylingTips = outfitsData.stylingTips || [];
+
+  const html = `
+    <h1>PackSmart — Trip Report</h1>
+    <h2>Trip Details</h2>
+    <table class="report-table">
+      <tr><td>Destination</td><td>${p.destination}</td></tr>
+      <tr><td>Duration</td><td>${p.duration} days</td></tr>
+      <tr><td>Climate</td><td>${p.climate}</td></tr>
+      <tr><td>Season</td><td>${p.season}</td></tr>
+      <tr><td>Activities</td><td>${p.interests.join(', ')}</td></tr>
+      <tr><td>Laundromat Access</td><td>${p.hasLaundromat ? 'Yes' : 'No'}</td></tr>
+      <tr><td>Luggage Size</td><td>${p.luggageSize}</td></tr>
+    </table>
+
+    <h2>Packing Analysis</h2>
+    <p><strong>Coverage Score:</strong> ${data.coverageScore}%</p>
+    <p>${data.summary || ''}</p>
+
+    ${missing.length ? `
+    <h3>Missing Items</h3>
+    <ul>
+      ${missing.map(m => `<li><strong>[${m.priority || 'optional'}]</strong> ${m.item} — ${m.reason}</li>`).join('')}
+    </ul>` : ''}
+
+    ${excessive.length ? `
+    <h3>Potentially Excessive</h3>
+    <ul>
+      ${excessive.map(e => `<li>${e.item} — ${e.reason}</li>`).join('')}
+    </ul>` : ''}
+
+    ${data.accessories ? `<h3>Accessories</h3><p>${data.accessories}</p>` : ''}
+
+    ${tips.length ? `
+    <h3>Packing Tips</h3>
+    <ul>${tips.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
+
+    <h2>Outfit Plans</h2>
+    ${outfits.map(outfit => `
+      <div class="report-outfit">
+        <h3>${outfit.name} ${outfit.weatherBadge ? `(${outfit.weatherBadge})` : ''}</h3>
+        <p><em>${outfit.occasion || ''}</em></p>
+        <p>${outfit.description || ''}</p>
+      </div>`).join('')}
+
+    ${stylingTips.length ? `
+    <h3>Styling Tips</h3>
+    <ul>${stylingTips.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
+  `;
+
+  document.getElementById('print-report').innerHTML = html;
+  window.print();
+}
+
 // ===== Start Over =====
 function startOver() {
   state.currentStep = 1;
@@ -423,6 +497,7 @@ const app = {
   handleFileInput,
   deleteItem,
   startOver,
+  downloadReport,
 };
 
 // ===== Init =====
