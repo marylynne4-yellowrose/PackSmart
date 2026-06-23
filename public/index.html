@@ -33,16 +33,21 @@
         <div class="step-line"></div>
         <div class="step-indicator" data-step="2">
           <div class="step-dot"><span>2</span></div>
-          <div class="step-label">My Wardrobe</div>
+          <div class="step-label">Travelers</div>
         </div>
         <div class="step-line"></div>
         <div class="step-indicator" data-step="3">
           <div class="step-dot"><span>3</span></div>
-          <div class="step-label">Analysis</div>
+          <div class="step-label">Wardrobe</div>
         </div>
         <div class="step-line"></div>
         <div class="step-indicator" data-step="4">
           <div class="step-dot"><span>4</span></div>
+          <div class="step-label">Analysis</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-indicator" data-step="5">
+          <div class="step-dot"><span>5</span></div>
           <div class="step-label">Outfits</div>
         </div>
       </div>
@@ -122,108 +127,114 @@
           </div>
         </div>
 
-        <div class="form-group full-width">
-          <label>Luggage Size</label>
-          <div class="luggage-grid" id="luggage-grid">
-            <label class="luggage-card">
-              <input type="radio" name="luggage" value="Carry-on" />
-              <span class="luggage-icon">🎒</span>
-              <span class="luggage-name">Carry-on</span>
-              <span class="luggage-desc">≈ 20L</span>
-            </label>
-            <label class="luggage-card">
-              <input type="radio" name="luggage" value="Small" />
-              <span class="luggage-icon">🧳</span>
-              <span class="luggage-name">Small</span>
-              <span class="luggage-desc">≈ 35L</span>
-            </label>
-            <label class="luggage-card">
-              <input type="radio" name="luggage" value="Medium" />
-              <span class="luggage-icon">🧳</span>
-              <span class="luggage-name">Medium</span>
-              <span class="luggage-desc">≈ 55L</span>
-            </label>
-            <label class="luggage-card">
-              <input type="radio" name="luggage" value="Large" />
-              <span class="luggage-icon">🧳</span>
-              <span class="luggage-name">Large</span>
-              <span class="luggage-desc">≈ 75L</span>
-            </label>
-            <label class="luggage-card">
-              <input type="radio" name="luggage" value="Extra Large" />
-              <span class="luggage-icon">🧳</span>
-              <span class="luggage-name">Extra Large</span>
-              <span class="luggage-desc">≈ 100L+</span>
-            </label>
-          </div>
-        </div>
-
         <div class="btn-row">
-          <button class="btn-primary" onclick="app.goToStep(2)">Continue to Wardrobe →</button>
+          <button class="btn-primary" onclick="app.goToStep(2)">Continue to Travelers →</button>
         </div>
       </div>
     </section>
 
-    <!-- Step 2: My Wardrobe -->
+    <!-- Step 2: Travelers -->
     <section class="step-section" id="step-2">
       <div class="card">
-        <h2 class="section-title">Add Your Clothing Items</h2>
-        <p class="section-desc">Photograph or upload each item you're considering packing. Our AI will identify and catalog each piece.</p>
+        <h2 class="section-title">Who are you packing for?</h2>
+        <p class="section-desc">Select everyone you're responsible for packing, then choose a suitcase size for each person.</p>
 
-        <div class="add-item-buttons">
-          <button class="btn-outline" onclick="document.getElementById('camera-input').click()">
-            📷 Take Photo
-          </button>
-          <button class="btn-outline" onclick="document.getElementById('file-input').click()">
-            📁 Upload Photo
-          </button>
-          <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="app.handleFileInput(this)" />
-          <input type="file" id="file-input" accept="image/*" multiple style="display:none" onchange="app.handleFileInput(this)" />
+        <div class="traveler-toggles">
+          <label class="traveler-toggle-card selected" data-traveler="self">
+            <input type="checkbox" checked disabled />
+            <span class="traveler-toggle-icon">🧑</span>
+            <span class="traveler-toggle-name">Myself</span>
+          </label>
+          <label class="traveler-toggle-card" data-traveler="partner">
+            <input type="checkbox" onchange="app.toggleTraveler('partner', this.checked)" />
+            <span class="traveler-toggle-icon">💑</span>
+            <span class="traveler-toggle-name">Partner / Spouse</span>
+          </label>
+          <label class="traveler-toggle-card" data-traveler="child1">
+            <input type="checkbox" onchange="app.toggleTraveler('child1', this.checked)" />
+            <span class="traveler-toggle-icon">👧</span>
+            <span class="traveler-toggle-name">Child 1</span>
+          </label>
+          <label class="traveler-toggle-card" data-traveler="child2">
+            <input type="checkbox" onchange="app.toggleTraveler('child2', this.checked)" />
+            <span class="traveler-toggle-icon">👦</span>
+            <span class="traveler-toggle-name">Child 2</span>
+          </label>
+          <label class="traveler-toggle-card" data-traveler="child3">
+            <input type="checkbox" onchange="app.toggleTraveler('child3', this.checked)" />
+            <span class="traveler-toggle-icon">👧</span>
+            <span class="traveler-toggle-name">Child 3</span>
+          </label>
+          <label class="traveler-toggle-card" data-traveler="child4">
+            <input type="checkbox" onchange="app.toggleTraveler('child4', this.checked)" />
+            <span class="traveler-toggle-icon">👦</span>
+            <span class="traveler-toggle-name">Child 4</span>
+          </label>
+          <label class="traveler-toggle-card" data-traveler="child5">
+            <input type="checkbox" onchange="app.toggleTraveler('child5', this.checked)" />
+            <span class="traveler-toggle-icon">👶</span>
+            <span class="traveler-toggle-name">Child 5</span>
+          </label>
+          <label class="traveler-toggle-card" data-traveler="pet">
+            <input type="checkbox" onchange="app.toggleTraveler('pet', this.checked)" />
+            <span class="traveler-toggle-icon">🐾</span>
+            <span class="traveler-toggle-name">Pet</span>
+          </label>
         </div>
 
-        <div id="wardrobe-empty" class="empty-state">
-          <div class="empty-icon">👕</div>
-          <p>No items added yet. Start by taking a photo or uploading an image of a clothing item.</p>
-        </div>
-
-        <div id="wardrobe-grid" class="wardrobe-grid" style="display:none"></div>
+        <div id="traveler-luggage-sections"></div>
 
         <div class="btn-row">
           <button class="btn-secondary" onclick="app.goToStep(1)">← Back</button>
-          <button class="btn-primary" onclick="app.goToStep(3)">Analyze Packing →</button>
+          <button class="btn-primary" onclick="app.goToStep(3)">Continue to Wardrobe →</button>
         </div>
       </div>
     </section>
 
-    <!-- Step 3: Packing Analysis -->
+    <!-- Step 3: My Wardrobe (per-traveler tabs) -->
     <section class="step-section" id="step-3">
       <div class="card">
-        <h2 class="section-title">Packing Analysis</h2>
-        <div id="analysis-content">
-          <div class="empty-state">
-            <div class="empty-icon">📊</div>
-            <p>Your analysis will appear here once you proceed from the Wardrobe step.</p>
-          </div>
-        </div>
+        <h2 class="section-title">Add Clothing Items</h2>
+        <p class="section-desc">Photograph or upload items you're considering packing for each traveler.</p>
+
+        <div class="traveler-tabs" id="wardrobe-tabs"></div>
+
+        <div id="wardrobe-tab-content"></div>
+
         <div class="btn-row">
-          <button class="btn-secondary" onclick="app.goToStep(2)">← Back to Wardrobe</button>
-          <button class="btn-primary" onclick="app.goToStep(4)">See Outfit Plans →</button>
+          <button class="btn-secondary" onclick="app.goToStep(2)">← Back</button>
+          <button class="btn-primary" onclick="app.goToStep(4)">Analyze Packing →</button>
         </div>
       </div>
     </section>
 
-    <!-- Step 4: Outfit Planner -->
+    <!-- Step 4: Packing Analysis (per-traveler tabs) -->
     <section class="step-section" id="step-4">
       <div class="card">
-        <h2 class="section-title">Your Outfit Plans</h2>
-        <div id="outfits-content">
-          <div class="empty-state">
-            <div class="empty-icon">👗</div>
-            <p>Your outfit plans will appear here.</p>
-          </div>
-        </div>
+        <h2 class="section-title">Packing Analysis</h2>
+
+        <div class="traveler-tabs" id="analysis-tabs"></div>
+
+        <div id="analysis-tab-content"></div>
+
         <div class="btn-row">
-          <button class="btn-secondary" onclick="app.goToStep(3)">← Back to Analysis</button>
+          <button class="btn-secondary" onclick="app.goToStep(3)">← Back to Wardrobe</button>
+          <button class="btn-primary" onclick="app.goToStep(5)">See Outfit Plans →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 5: Outfit Planner (per-traveler tabs) -->
+    <section class="step-section" id="step-5">
+      <div class="card">
+        <h2 class="section-title">Your Outfit Plans</h2>
+
+        <div class="traveler-tabs" id="outfits-tabs"></div>
+
+        <div id="outfits-tab-content"></div>
+
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="app.goToStep(4)">← Back to Analysis</button>
           <button class="btn-outline" onclick="app.downloadReport()">🖨️ Download / Print Report</button>
           <button class="btn-primary" onclick="app.startOver()">Start New Trip ✈️</button>
         </div>
