@@ -304,6 +304,85 @@ select:focus {
 .luggage-name { font-size: 0.8rem; font-weight: 600; color: var(--text); }
 .luggage-desc { font-size: 0.7rem; color: var(--text-muted); }
 
+/* ===== Traveler Toggle Cards ===== */
+.traveler-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.traveler-toggle-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 100px;
+  text-align: center;
+  user-select: none;
+}
+
+.traveler-toggle-card:hover { border-color: var(--primary); }
+.traveler-toggle-card input { display: none; }
+.traveler-toggle-card.selected {
+  border-color: var(--primary);
+  background: rgba(233, 108, 53, 0.06);
+}
+
+.traveler-toggle-icon { font-size: 1.8rem; }
+.traveler-toggle-name { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+
+/* ===== Traveler Luggage Sections ===== */
+.traveler-luggage-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--bg);
+  border-radius: 12px;
+}
+
+.traveler-luggage-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 10px;
+}
+
+/* ===== Traveler Tabs ===== */
+.traveler-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+
+.traveler-tab {
+  padding: 10px 18px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.traveler-tab:hover { color: var(--primary); }
+.traveler-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
 /* ===== Buttons ===== */
 .btn-row {
   display: flex;
