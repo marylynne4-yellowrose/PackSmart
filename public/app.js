@@ -16,6 +16,8 @@ const state = {
   tripParams: {
     destination: '',
     duration: 0,
+    startDate: '',
+    endDate: '',
     season: '',
     interests: [],
     hasLaundromat: false,
@@ -249,6 +251,8 @@ function collectTripParams(peek = false) {
   const p = {
     destination: document.getElementById('destination').value,
     duration: parseInt(document.getElementById('duration').value) || 0,
+    startDate: document.getElementById('start-date').value,
+    endDate: document.getElementById('end-date').value,
     season: document.getElementById('season').value,
     interests: [...document.querySelectorAll('#interests-grid input:checked')].map(el => el.value),
     hasLaundromat: document.getElementById('laundromat').checked,
@@ -330,6 +334,15 @@ function renderPackingGuide(data) {
         </div>
       </div>
     </div>
+
+    ${data.weatherForecast ? `
+    <div class="weather-forecast-card">
+      <div class="weather-forecast-icon">📅</div>
+      <div class="weather-forecast-info">
+        <h3>Weather Forecast for Your Dates</h3>
+        <p>${data.weatherForecast}</p>
+      </div>
+    </div>` : ''}
 
     ${data.cultureTitle ? `
     <div class="culture-summary-card">
@@ -675,6 +688,7 @@ function renderFinalReport() {
       <h3>Trip Details</h3>
       <table class="report-details-table">
         <tr><td>Destination</td><td>${p.destination}</td></tr>
+        ${p.startDate && p.endDate ? `<tr><td>Travel Dates</td><td>${new Date(p.startDate + 'T00:00:00').toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'})} – ${new Date(p.endDate + 'T00:00:00').toLocaleDateString('en-US', {month:'long',day:'numeric',year:'numeric'})}</td></tr>` : ''}
         <tr><td>Duration</td><td>${p.duration} days</td></tr>
         <tr><td>Season</td><td>${p.season}</td></tr>
         <tr><td>Activities</td><td>${p.interests.join(', ')}</td></tr>
@@ -858,6 +872,8 @@ function loadTrip(index) {
   // Restore form fields
   document.getElementById('destination').value = state.tripParams.destination;
   document.getElementById('duration').value = state.tripParams.duration;
+  document.getElementById('start-date').value = state.tripParams.startDate || '';
+  document.getElementById('end-date').value = state.tripParams.endDate || '';
   document.getElementById('season').value = state.tripParams.season;
   document.getElementById('laundromat').checked = state.tripParams.hasLaundromat;
   document.getElementById('laundromat-label').textContent = state.tripParams.hasLaundromat ? 'Yes' : 'No';
@@ -904,7 +920,7 @@ function deleteTrip(index) {
 // ===== Start Over =====
 function startOver() {
   state.currentStep = 1;
-  state.tripParams = { destination: '', duration: 0, season: '', interests: [], hasLaundromat: false };
+  state.tripParams = { destination: '', duration: 0, startDate: '', endDate: '', season: '', interests: [], hasLaundromat: false };
   state.activeTravelers = ['self'];
   state.travelers = { self: { gender: '', luggageSize: '', items: [], packingAnalysis: null, outfits: null } };
   state.packingGuide = null;
@@ -914,6 +930,8 @@ function startOver() {
 
   document.getElementById('destination').value = '';
   document.getElementById('duration').value = '';
+  document.getElementById('start-date').value = '';
+  document.getElementById('end-date').value = '';
   document.getElementById('season').value = '';
   document.getElementById('laundromat').checked = false;
   document.getElementById('laundromat-label').textContent = 'No';
@@ -950,6 +968,26 @@ function initUI() {
   document.getElementById('laundromat').addEventListener('change', function () {
     document.getElementById('laundromat-label').textContent = this.checked ? 'Yes' : 'No';
   });
+
+  function syncDatesAndDuration() {
+    const startVal = document.getElementById('start-date').value;
+    const endVal = document.getElementById('end-date').value;
+    if (startVal && endVal) {
+      const start = new Date(startVal);
+      const end = new Date(endVal);
+      if (end >= start) {
+        const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        document.getElementById('duration').value = days;
+
+        const month = start.getMonth();
+        const seasons = ['Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer','Autumn','Autumn','Autumn','Winter'];
+        document.getElementById('season').value = seasons[month];
+      }
+    }
+  }
+
+  document.getElementById('start-date').addEventListener('change', syncDatesAndDuration);
+  document.getElementById('end-date').addEventListener('change', syncDatesAndDuration);
 
   renderTravelerDetailSections();
   loadSavedTrips();

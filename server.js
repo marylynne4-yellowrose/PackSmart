@@ -82,6 +82,7 @@ app.post('/api/packing-guide', async (req, res) => {
 Trip details:
 - Destination: ${tripParams.destination}
 - Duration: ${tripParams.duration} days
+${tripParams.startDate && tripParams.endDate ? `- Travel dates: ${tripParams.startDate} to ${tripParams.endDate}` : ''}
 - Season: ${tripParams.season}
 - Interests/Activities: ${tripParams.interests.join(', ')}
 - Laundromat access: ${tripParams.hasLaundromat ? 'Yes' : 'No'}
@@ -89,7 +90,7 @@ Trip details:
 Travelers:
 ${travelerDescriptions}
 
-Based on the destination and season, determine the expected climate and provide cultural information relevant to packing and travel (dress codes, customs, etiquette, local norms). Then for each traveler, provide a personalized packing guide considering their gender, luggage size, and the planned activities. For pets, recommend travel supplies instead of clothing.
+Based on the destination, season, and specific travel dates (if provided), determine the expected climate and provide a weather assessment for those exact dates — including what the weather will most likely be or is historically known to be during that time of year. Also provide cultural information relevant to packing and travel (dress codes, customs, etiquette, local norms). Then for each traveler, provide a personalized packing guide considering their gender, luggage size, and the planned activities. For pets, recommend travel supplies instead of clothing.
 
 Return a JSON object with exactly these fields:
 {
@@ -99,6 +100,7 @@ Return a JSON object with exactly these fields:
   "tempRange": "expected temperature range (e.g. '72-88°F / 22-31°C')",
   "precipitation": "precipitation expectation (e.g. 'Low chance of rain')",
   "humidity": "humidity level (e.g. 'Moderate humidity')",
+  "weatherForecast": "2-3 sentence specific weather assessment for the exact travel dates based on historical data and seasonal patterns (e.g. 'During late June in Barcelona, expect consistently sunny skies with temperatures around 80-88°F. Rain is rare but brief afternoon thunderstorms can occur 2-3 times per month.')",
   "cultureTitle": "short culture heading (e.g. 'Spanish Culture & Customs')",
   "cultureSummary": "2-3 sentence overview of local culture relevant to travelers",
   "cultureNotes": ["array of 4-6 specific cultural tips relevant to packing and behavior, e.g. dress codes for religious sites, tipping customs, dining etiquette, local fashion norms"],
