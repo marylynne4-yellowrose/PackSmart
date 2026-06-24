@@ -16,17 +16,16 @@ const state = {
   tripParams: {
     destination: '',
     duration: 0,
-    climate: '',
     season: '',
     interests: [],
     hasLaundromat: false,
   },
   activeTravelers: ['self'],
   travelers: {
-    self: { luggageSize: '', items: [], packingAnalysis: null, outfits: null },
+    self: { gender: '', luggageSize: '', items: [], packingAnalysis: null, outfits: null },
   },
+  packingGuide: null,
   activeWardrobeTab: 'self',
-  activeAnalysisTab: 'self',
   activeOutfitsTab: 'self',
 };
 
@@ -100,7 +99,7 @@ function showToast(msg, isError = false) {
 // ===== Traveler Management =====
 function getTraveler(key) {
   if (!state.travelers[key]) {
-    state.travelers[key] = { luggageSize: '', items: [], packingAnalysis: null, outfits: null };
+    state.travelers[key] = { gender: '', luggageSize: '', items: [], packingAnalysis: null, outfits: null };
   }
   return state.travelers[key];
 }
@@ -115,15 +114,27 @@ function toggleTraveler(key, enabled) {
     state.activeTravelers = state.activeTravelers.filter(k => k !== key);
     if (card) card.classList.remove('selected');
   }
-  renderTravelerLuggageSections();
+  renderTravelerDetailSections();
 }
 
-function renderTravelerLuggageSections() {
-  const container = document.getElementById('traveler-luggage-sections');
+function renderTravelerDetailSections() {
+  const container = document.getElementById('traveler-detail-sections');
   container.innerHTML = state.activeTravelers.map(key => {
     const def = TRAVELER_DEFS[key];
     const traveler = getTraveler(key);
     const isPet = key === 'pet';
+
+    const genderHtml = isPet ? '' : `
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Gender</label>
+        <select onchange="app.setTravelerGender('${key}', this.value)">
+          <option value="" ${traveler.gender === '' ? 'selected' : ''}>Select gender…</option>
+          <option value="male" ${traveler.gender === 'male' ? 'selected' : ''}>Male</option>
+          <option value="female" ${traveler.gender === 'female' ? 'selected' : ''}>Female</option>
+          <option value="gender neutral" ${traveler.gender === 'gender neutral' ? 'selected' : ''}>Gender Neutral</option>
+        </select>
+      </div>
+    `;
 
     const luggageOptions = isPet
       ? [
@@ -140,9 +151,11 @@ function renderTravelerLuggageSections() {
         ];
 
     return `
-      <div class="traveler-luggage-section">
-        <h3 class="traveler-luggage-heading">${def.icon} ${def.label} — Luggage Size</h3>
-        <div class="luggage-grid">
+      <div class="traveler-detail-section">
+        <h3 class="traveler-detail-heading">${def.icon} ${def.label}</h3>
+        ${genderHtml}
+        <label style="font-size:0.85rem;font-weight:600;">Luggage Size</label>
+        <div class="luggage-grid" style="margin-top:6px;">
           ${luggageOptions.map(opt => `
             <label class="luggage-card ${traveler.luggageSize === opt.value ? 'selected' : ''}">
               <input type="radio" name="luggage-${key}" value="${opt.value}"
@@ -159,6 +172,10 @@ function renderTravelerLuggageSections() {
   }).join('');
 }
 
+function setTravelerGender(key, value) {
+  getTraveler(key).gender = value;
+}
+
 function setTravelerLuggage(key, value) {
   getTraveler(key).luggageSize = value;
   const cards = document.querySelectorAll(`input[name="luggage-${key}"]`);
@@ -173,17 +190,19 @@ async function goToStep(step) {
   if (step > state.currentStep) {
     if (!validateStep(state.currentStep)) return;
     if (state.currentStep === 1) collectTripParams();
-    if (step === 4 && state.currentStep === 3) {
-      await runPackingAnalysisAll();
+    if (step === 3 && state.currentStep === 2) {
+      await runPackingGuide();
     }
     if (step === 5 && state.currentStep === 4) {
-      await runOutfitPlanningAll();
+      await runAnalysisAndOutfits();
+    }
+    if (step === 6 && state.currentStep === 5) {
+      renderFinalReport();
     }
   }
   state.currentStep = step;
 
-  if (step === 3) renderWardrobeTabs();
-  if (step === 4) renderAnalysisTabs();
+  if (step === 4) renderWardrobeTabs();
   if (step === 5) renderOutfitsTabs();
 
   renderStep(step);
@@ -194,20 +213,23 @@ function validateStep(step) {
     const p = collectTripParams(true);
     if (!p.destination.trim()) { showToast('Please enter a destination.', true); return false; }
     if (!p.duration || p.duration < 1) { showToast('Please enter trip duration.', true); return false; }
-    if (!p.climate) { showToast('Please select a climate.', true); return false; }
     if (!p.season) { showToast('Please select a season.', true); return false; }
     if (p.interests.length === 0) { showToast('Please select at least one interest.', true); return false; }
   }
   if (step === 2) {
     for (const key of state.activeTravelers) {
       const t = getTraveler(key);
+      if (key !== 'pet' && !t.gender) {
+        showToast(`Please select a gender for ${TRAVELER_DEFS[key].label}.`, true);
+        return false;
+      }
       if (!t.luggageSize) {
         showToast(`Please select a luggage size for ${TRAVELER_DEFS[key].label}.`, true);
         return false;
       }
     }
   }
-  if (step === 3) {
+  if (step === 4) {
     for (const key of state.activeTravelers) {
       const t = getTraveler(key);
       if (t.items.length === 0) {
@@ -227,7 +249,6 @@ function collectTripParams(peek = false) {
   const p = {
     destination: document.getElementById('destination').value,
     duration: parseInt(document.getElementById('duration').value) || 0,
-    climate: document.getElementById('climate').value,
     season: document.getElementById('season').value,
     interests: [...document.querySelectorAll('#interests-grid input:checked')].map(el => el.value),
     hasLaundromat: document.getElementById('laundromat').checked,
@@ -264,7 +285,87 @@ function renderTravelerTabBar(containerId, activeKey, onClickFn) {
   }).join('');
 }
 
-// ===== Step 3: Wardrobe (per-traveler) =====
+// ===== Step 3: Packing Guide =====
+async function runPackingGuide() {
+  showLoading('Analyzing climate and building your packing guide…');
+  try {
+    const travelerInfo = state.activeTravelers.map(key => {
+      const t = getTraveler(key);
+      return {
+        label: TRAVELER_DEFS[key].label,
+        gender: t.gender || 'n/a',
+        luggageSize: t.luggageSize,
+        isPet: key === 'pet',
+      };
+    });
+
+    const result = await apiPost('/api/packing-guide', {
+      tripParams: state.tripParams,
+      travelers: travelerInfo,
+    });
+
+    state.packingGuide = result;
+    renderPackingGuide(result);
+  } catch (e) {
+    showToast(`Packing guide failed: ${e.message}`, true);
+    throw e;
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderPackingGuide(data) {
+  const container = document.getElementById('packing-guide-content');
+
+  let html = `
+    <div class="climate-summary-card">
+      <div class="climate-icon">${data.climateIcon || '🌤️'}</div>
+      <div class="climate-info">
+        <h3>${data.climate || 'Climate'}</h3>
+        <p>${data.climateSummary || ''}</p>
+        <div class="climate-details">
+          ${data.tempRange ? `<span class="climate-detail">🌡️ ${data.tempRange}</span>` : ''}
+          ${data.precipitation ? `<span class="climate-detail">💧 ${data.precipitation}</span>` : ''}
+          ${data.humidity ? `<span class="climate-detail">💨 ${data.humidity}</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+
+  const guides = data.travelerGuides || [];
+  for (const guide of guides) {
+    html += `
+      <div class="traveler-guide-card">
+        <h3 class="traveler-guide-heading">${guide.travelerLabel}</h3>
+        ${guide.essentials ? `
+        <div class="guide-section">
+          <h4>Essentials to Pack</h4>
+          <ul class="guide-list">
+            ${guide.essentials.map(item => `<li><span class="guide-check">✓</span> ${item}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+        ${guide.recommended ? `
+        <div class="guide-section">
+          <h4>Recommended</h4>
+          <ul class="guide-list">
+            ${guide.recommended.map(item => `<li><span class="guide-dot">●</span> ${item}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+        ${guide.tips ? `
+        <div class="guide-section">
+          <h4>Tips</h4>
+          <ul class="guide-list tips">
+            ${guide.tips.map(tip => `<li><span class="tip-icon">💡</span> ${tip}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+// ===== Step 4: Wardrobe (per-traveler) =====
 function renderWardrobeTabs() {
   if (!state.activeTravelers.includes(state.activeWardrobeTab)) {
     state.activeWardrobeTab = state.activeTravelers[0];
@@ -284,7 +385,6 @@ function renderWardrobeContent(travelerKey) {
   const traveler = getTraveler(travelerKey);
   const def = TRAVELER_DEFS[travelerKey];
   const isPet = travelerKey === 'pet';
-
   const itemLabel = isPet ? 'pet items' : 'clothing items';
 
   let html = `
@@ -380,132 +480,37 @@ function deleteItem(travelerKey, id) {
   if (state.activeWardrobeTab === travelerKey) renderWardrobeContent(travelerKey);
 }
 
-// ===== Step 4: Packing Analysis (per-traveler) =====
-async function runPackingAnalysisAll() {
-  showLoading('Analyzing packing lists…');
+// ===== Step 5: Analysis & Outfits (per-traveler) =====
+async function runAnalysisAndOutfits() {
+  showLoading('Analyzing packing and generating outfit recommendations…');
   try {
     for (const key of state.activeTravelers) {
       const traveler = getTraveler(key);
       const itemAnalyses = traveler.items.map(i => i.analysis);
-      const result = await apiPost('/api/analyze-packing', {
-        items: itemAnalyses,
-        tripParams: { ...state.tripParams, luggageSize: traveler.luggageSize },
-        travelerLabel: TRAVELER_DEFS[key].label,
-      });
-      traveler.packingAnalysis = result;
+      const travelerParams = {
+        ...state.tripParams,
+        luggageSize: traveler.luggageSize,
+        gender: traveler.gender,
+      };
+
+      const [analysisResult, outfitsResult] = await Promise.all([
+        apiPost('/api/analyze-packing', {
+          items: itemAnalyses,
+          tripParams: travelerParams,
+          travelerLabel: TRAVELER_DEFS[key].label,
+        }),
+        apiPost('/api/get-outfits', {
+          items: itemAnalyses,
+          tripParams: travelerParams,
+          travelerLabel: TRAVELER_DEFS[key].label,
+        }),
+      ]);
+
+      traveler.packingAnalysis = analysisResult;
+      traveler.outfits = outfitsResult;
     }
   } catch (e) {
     showToast(`Analysis failed: ${e.message}`, true);
-    throw e;
-  } finally {
-    hideLoading();
-  }
-}
-
-function renderAnalysisTabs() {
-  if (!state.activeTravelers.includes(state.activeAnalysisTab)) {
-    state.activeAnalysisTab = state.activeTravelers[0];
-  }
-  renderTravelerTabBar('analysis-tabs', state.activeAnalysisTab, 'app.switchAnalysisTab');
-  renderAnalysisContent(state.activeAnalysisTab);
-}
-
-function switchAnalysisTab(key) {
-  state.activeAnalysisTab = key;
-  renderTravelerTabBar('analysis-tabs', key, 'app.switchAnalysisTab');
-  renderAnalysisContent(key);
-}
-
-function renderAnalysisContent(travelerKey) {
-  const container = document.getElementById('analysis-tab-content');
-  const traveler = getTraveler(travelerKey);
-  const data = traveler.packingAnalysis;
-
-  if (!data) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><p>No analysis available yet.</p></div>`;
-    return;
-  }
-
-  const missing = (data.missing || []);
-  const excessive = (data.excessive || []);
-  const tips = (data.tips || []);
-
-  container.innerHTML = `
-    <div class="analysis-score-wrap">
-      <div class="score-circle" style="background:${getScoreColor(data.coverageScore)}">
-        ${data.coverageScore}%
-      </div>
-      <div class="score-summary">
-        <h3>Packing Coverage Score</h3>
-        <p>${data.summary || ''}</p>
-      </div>
-    </div>
-
-    ${missing.length ? `
-    <div class="analysis-section">
-      <h3>Missing Items</h3>
-      <ul class="missing-list">
-        ${missing.map(m => `
-          <li class="missing-item ${m.priority || 'optional'}">
-            <span class="priority-badge">${m.priority || 'optional'}</span>
-            <div class="missing-item-text">
-              <div class="missing-item-name">${m.item}</div>
-              <div class="missing-item-reason">${m.reason}</div>
-            </div>
-          </li>`).join('')}
-      </ul>
-    </div>` : ''}
-
-    ${excessive.length ? `
-    <div class="analysis-section">
-      <h3>Potentially Excessive</h3>
-      <ul class="excessive-list">
-        ${excessive.map(e => `
-          <li class="excessive-item">
-            <span>⚠️</span>
-            <div><strong>${e.item}</strong> — ${e.reason}</div>
-          </li>`).join('')}
-      </ul>
-    </div>` : ''}
-
-    ${data.accessories ? `
-    <div class="analysis-section">
-      <h3>Accessories</h3>
-      <p style="font-size:0.88rem;color:var(--text-muted)">${data.accessories}</p>
-    </div>` : ''}
-
-    ${tips.length ? `
-    <div class="analysis-section">
-      <h3>Packing Tips</h3>
-      <ul class="tips-list">
-        ${tips.map(t => `<li><span class="tip-icon">💡</span>${t}</li>`).join('')}
-      </ul>
-    </div>` : ''}
-  `;
-}
-
-function getScoreColor(score) {
-  if (score >= 75) return '#27ae60';
-  if (score >= 50) return '#f39c12';
-  return '#e74c3c';
-}
-
-// ===== Step 5: Outfit Planner (per-traveler) =====
-async function runOutfitPlanningAll() {
-  showLoading('Generating outfit recommendations…');
-  try {
-    for (const key of state.activeTravelers) {
-      const traveler = getTraveler(key);
-      const itemAnalyses = traveler.items.map(i => i.analysis);
-      const result = await apiPost('/api/get-outfits', {
-        items: itemAnalyses,
-        tripParams: { ...state.tripParams, luggageSize: traveler.luggageSize },
-        travelerLabel: TRAVELER_DEFS[key].label,
-      });
-      traveler.outfits = result;
-    }
-  } catch (e) {
-    showToast(`Outfit planning failed: ${e.message}`, true);
     throw e;
   } finally {
     hideLoading();
@@ -526,163 +531,381 @@ function switchOutfitsTab(key) {
   renderOutfitsContent(key);
 }
 
+function getScoreColor(score) {
+  if (score >= 75) return '#27ae60';
+  if (score >= 50) return '#f39c12';
+  return '#e74c3c';
+}
+
 function renderOutfitsContent(travelerKey) {
   const container = document.getElementById('outfits-tab-content');
   const traveler = getTraveler(travelerKey);
-  const data = traveler.outfits;
+  const analysis = traveler.packingAnalysis;
+  const outfitsData = traveler.outfits;
 
-  if (!data) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">👗</div><p>No outfit plans available yet.</p></div>`;
+  if (!analysis && !outfitsData) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">👗</div><p>No results available yet.</p></div>`;
     return;
   }
 
-  const outfits = data.outfits || [];
-  const tips = data.stylingTips || [];
+  let html = '';
 
-  container.innerHTML = `
-    <div class="outfits-grid">
-      ${outfits.map(outfit => {
-        const usedItems = (outfit.itemIndices || []).map(idx => traveler.items[idx - 1]).filter(Boolean);
-        const thumbsHtml = usedItems.map(item =>
-          item
-            ? `<img class="outfit-item-thumb" src="${item.imageData}" alt="${item.analysis ? item.analysis.type : 'item'}" title="${item.analysis ? item.analysis.type : ''}" />`
-            : `<div class="outfit-item-thumb-placeholder">👕</div>`
-        ).join('');
+  // Analysis section
+  if (analysis) {
+    const missing = analysis.missing || [];
+    const excessive = analysis.excessive || [];
+    const tips = analysis.tips || [];
 
-        return `
-          <div class="outfit-card">
-            <div class="outfit-card-header">
-              <div>
-                <div class="outfit-name">${outfit.name}</div>
-                <div class="outfit-occasion">${outfit.occasion}</div>
+    html += `
+      <div class="analysis-score-wrap">
+        <div class="score-circle" style="background:${getScoreColor(analysis.coverageScore)}">
+          ${analysis.coverageScore}%
+        </div>
+        <div class="score-summary">
+          <h3>Packing Coverage Score</h3>
+          <p>${analysis.summary || ''}</p>
+        </div>
+      </div>
+
+      ${missing.length ? `
+      <div class="analysis-section">
+        <h3>Missing Items</h3>
+        <ul class="missing-list">
+          ${missing.map(m => `
+            <li class="missing-item ${m.priority || 'optional'}">
+              <span class="priority-badge">${m.priority || 'optional'}</span>
+              <div class="missing-item-text">
+                <div class="missing-item-name">${m.item}</div>
+                <div class="missing-item-reason">${m.reason}</div>
               </div>
-              <div class="weather-badge">${outfit.weatherBadge || ''}</div>
-            </div>
-            <div class="outfit-card-body">
-              ${thumbsHtml ? `<div class="outfit-items-row">${thumbsHtml}</div>` : ''}
-              <p class="outfit-description">${outfit.description || ''}</p>
-            </div>
-          </div>`;
-      }).join('')}
-    </div>
+            </li>`).join('')}
+        </ul>
+      </div>` : ''}
 
-    ${tips.length ? `
-    <div class="styling-tips-section">
-      <h3>Styling Tips</h3>
-      <ul class="tips-list">
-        ${tips.map(t => `<li><span class="tip-icon">✨</span>${t}</li>`).join('')}
-      </ul>
-    </div>` : ''}
-  `;
+      ${excessive.length ? `
+      <div class="analysis-section">
+        <h3>Potentially Excessive</h3>
+        <ul class="excessive-list">
+          ${excessive.map(e => `
+            <li class="excessive-item">
+              <span>⚠️</span>
+              <div><strong>${e.item}</strong> — ${e.reason}</div>
+            </li>`).join('')}
+        </ul>
+      </div>` : ''}
+
+      ${tips.length ? `
+      <div class="analysis-section">
+        <h3>Packing Tips</h3>
+        <ul class="tips-list">
+          ${tips.map(t => `<li><span class="tip-icon">💡</span>${t}</li>`).join('')}
+        </ul>
+      </div>` : ''}
+    `;
+  }
+
+  // Outfits section
+  if (outfitsData) {
+    const outfits = outfitsData.outfits || [];
+    const stylingTips = outfitsData.stylingTips || [];
+
+    html += `<h3 style="font-size:1.1rem;font-weight:700;color:var(--navy);margin:24px 0 12px;">Outfit Recommendations</h3>`;
+
+    html += `<div class="outfits-grid">`;
+    html += outfits.map(outfit => {
+      const usedItems = (outfit.itemIndices || []).map(idx => traveler.items[idx - 1]).filter(Boolean);
+      const thumbsHtml = usedItems.map(item =>
+        item
+          ? `<img class="outfit-item-thumb" src="${item.imageData}" alt="${item.analysis ? item.analysis.type : 'item'}" title="${item.analysis ? item.analysis.type : ''}" />`
+          : `<div class="outfit-item-thumb-placeholder">👕</div>`
+      ).join('');
+
+      return `
+        <div class="outfit-card">
+          <div class="outfit-card-header">
+            <div>
+              <div class="outfit-name">${outfit.name}</div>
+              <div class="outfit-occasion">${outfit.occasion}</div>
+            </div>
+            <div class="weather-badge">${outfit.weatherBadge || ''}</div>
+          </div>
+          <div class="outfit-card-body">
+            ${thumbsHtml ? `<div class="outfit-items-row">${thumbsHtml}</div>` : ''}
+            <p class="outfit-description">${outfit.description || ''}</p>
+          </div>
+        </div>`;
+    }).join('');
+    html += `</div>`;
+
+    if (stylingTips.length) {
+      html += `
+      <div class="styling-tips-section">
+        <h3>Styling Tips</h3>
+        <ul class="tips-list">
+          ${stylingTips.map(t => `<li><span class="tip-icon">✨</span>${t}</li>`).join('')}
+        </ul>
+      </div>`;
+    }
+  }
+
+  container.innerHTML = html;
 }
 
-// ===== Printable Report =====
-function downloadReport() {
-  const hasData = state.activeTravelers.some(k => getTraveler(k).packingAnalysis && getTraveler(k).outfits);
-  if (!hasData) {
-    showToast('Please complete the analysis and outfit steps first.', true);
-    return;
-  }
-
+// ===== Step 6: Final Report =====
+function renderFinalReport() {
+  const container = document.getElementById('report-content');
   const p = state.tripParams;
+  const guide = state.packingGuide;
 
   let html = `
-    <h1>PackSmart — Trip Report</h1>
-    <h2>Trip Details</h2>
-    <table class="report-table">
-      <tr><td>Destination</td><td>${p.destination}</td></tr>
-      <tr><td>Duration</td><td>${p.duration} days</td></tr>
-      <tr><td>Climate</td><td>${p.climate}</td></tr>
-      <tr><td>Season</td><td>${p.season}</td></tr>
-      <tr><td>Activities</td><td>${p.interests.join(', ')}</td></tr>
-      <tr><td>Laundromat Access</td><td>${p.hasLaundromat ? 'Yes' : 'No'}</td></tr>
-      <tr><td>Travelers</td><td>${state.activeTravelers.map(k => TRAVELER_DEFS[k].label).join(', ')}</td></tr>
-    </table>
+    <div class="report-section">
+      <h3>Trip Details</h3>
+      <table class="report-details-table">
+        <tr><td>Destination</td><td>${p.destination}</td></tr>
+        <tr><td>Duration</td><td>${p.duration} days</td></tr>
+        <tr><td>Season</td><td>${p.season}</td></tr>
+        <tr><td>Activities</td><td>${p.interests.join(', ')}</td></tr>
+        <tr><td>Laundromat</td><td>${p.hasLaundromat ? 'Yes' : 'No'}</td></tr>
+        <tr><td>Travelers</td><td>${state.activeTravelers.map(k => TRAVELER_DEFS[k].label).join(', ')}</td></tr>
+      </table>
+    </div>
   `;
+
+  if (guide) {
+    html += `
+      <div class="report-section">
+        <h3>${guide.climateIcon || '🌤️'} Climate: ${guide.climate || ''}</h3>
+        <p>${guide.climateSummary || ''}</p>
+      </div>
+    `;
+  }
 
   for (const key of state.activeTravelers) {
     const def = TRAVELER_DEFS[key];
     const traveler = getTraveler(key);
-    const data = traveler.packingAnalysis;
+    const analysis = traveler.packingAnalysis;
     const outfitsData = traveler.outfits;
 
-    html += `<h2>${def.icon} ${def.label}</h2>`;
-    html += `<p><strong>Luggage:</strong> ${traveler.luggageSize}</p>`;
+    html += `<div class="report-traveler-section">`;
+    html += `<h3>${def.icon} ${def.label}</h3>`;
+    html += `<p><strong>Gender:</strong> ${traveler.gender || 'N/A'} &nbsp; <strong>Luggage:</strong> ${traveler.luggageSize}</p>`;
 
-    if (data) {
-      const missing = data.missing || [];
-      const excessive = data.excessive || [];
-      const tips = data.tips || [];
+    // Item photos
+    if (traveler.items.length > 0) {
+      html += `<div class="report-items-grid">`;
+      html += traveler.items.map(item => `
+        <div class="report-item">
+          <img src="${item.imageData}" alt="${item.analysis ? item.analysis.type : 'item'}" />
+          <span>${item.analysis ? item.analysis.type : 'Item'}</span>
+        </div>
+      `).join('');
+      html += `</div>`;
+    }
 
+    if (analysis) {
       html += `
-        <h3>Packing Analysis</h3>
-        <p><strong>Coverage Score:</strong> ${data.coverageScore}%</p>
-        <p>${data.summary || ''}</p>
-
-        ${missing.length ? `
-        <h4>Missing Items</h4>
-        <ul>
-          ${missing.map(m => `<li><strong>[${m.priority || 'optional'}]</strong> ${m.item} — ${m.reason}</li>`).join('')}
-        </ul>` : ''}
-
-        ${excessive.length ? `
-        <h4>Potentially Excessive</h4>
-        <ul>
-          ${excessive.map(e => `<li>${e.item} — ${e.reason}</li>`).join('')}
-        </ul>` : ''}
-
-        ${data.accessories ? `<h4>Accessories</h4><p>${data.accessories}</p>` : ''}
-
-        ${tips.length ? `
-        <h4>Packing Tips</h4>
-        <ul>${tips.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
+        <div class="report-analysis">
+          <span class="report-score" style="background:${getScoreColor(analysis.coverageScore)}">${analysis.coverageScore}%</span>
+          <span>${analysis.summary || ''}</span>
+        </div>
       `;
+
+      const missing = analysis.missing || [];
+      if (missing.length) {
+        html += `<h4>Missing Items</h4><ul>`;
+        html += missing.map(m => `<li><strong>[${m.priority}]</strong> ${m.item} — ${m.reason}</li>`).join('');
+        html += `</ul>`;
+      }
     }
 
     if (outfitsData) {
       const outfits = outfitsData.outfits || [];
-      const stylingTips = outfitsData.stylingTips || [];
-
-      html += `<h3>Outfit Plans</h3>`;
-      html += outfits.map(outfit => `
-        <div class="report-outfit">
-          <h4>${outfit.name} ${outfit.weatherBadge ? `(${outfit.weatherBadge})` : ''}</h4>
-          <p><em>${outfit.occasion || ''}</em></p>
-          <p>${outfit.description || ''}</p>
-        </div>`).join('');
-
-      if (stylingTips.length) {
+      html += `<h4>Outfit Recommendations</h4>`;
+      for (const outfit of outfits) {
+        const usedItems = (outfit.itemIndices || []).map(idx => traveler.items[idx - 1]).filter(Boolean);
         html += `
-        <h4>Styling Tips</h4>
-        <ul>${stylingTips.map(t => `<li>${t}</li>`).join('')}</ul>`;
+          <div class="report-outfit">
+            <h5>${outfit.name} ${outfit.weatherBadge ? `(${outfit.weatherBadge})` : ''}</h5>
+            <p><em>${outfit.occasion || ''}</em></p>
+            ${usedItems.length ? `<div class="report-outfit-thumbs">${usedItems.map(item =>
+              `<img src="${item.imageData}" alt="${item.analysis ? item.analysis.type : ''}" title="${item.analysis ? item.analysis.type : ''}" />`
+            ).join('')}</div>` : ''}
+            <p>${outfit.description || ''}</p>
+          </div>
+        `;
       }
     }
+
+    html += `</div>`;
   }
 
-  document.getElementById('print-report').innerHTML = html;
+  container.innerHTML = html;
+  loadSavedTrips();
+}
+
+// ===== Print Report =====
+function printReport() {
+  const reportContent = document.getElementById('report-content');
+  if (!reportContent || !reportContent.innerHTML.trim()) {
+    showToast('Please complete all steps first.', true);
+    return;
+  }
+  document.getElementById('print-report').innerHTML = `<h1>PackSmart — Trip Report</h1>` + reportContent.innerHTML;
   window.print();
+}
+
+// ===== Save / Load Trips =====
+function saveTrip() {
+  const tripName = `${state.tripParams.destination} - ${state.tripParams.season} (${new Date().toLocaleDateString()})`;
+
+  const saveData = {
+    name: tripName,
+    savedAt: new Date().toISOString(),
+    tripParams: state.tripParams,
+    activeTravelers: state.activeTravelers,
+    travelers: {},
+    packingGuide: state.packingGuide,
+  };
+
+  for (const key of state.activeTravelers) {
+    const t = getTraveler(key);
+    saveData.travelers[key] = {
+      gender: t.gender,
+      luggageSize: t.luggageSize,
+      items: t.items.map(item => ({
+        id: item.id,
+        imageData: item.imageData,
+        analysis: item.analysis,
+      })),
+      packingAnalysis: t.packingAnalysis,
+      outfits: t.outfits,
+    };
+  }
+
+  const saved = JSON.parse(localStorage.getItem('packsmart_trips') || '[]');
+  saved.unshift(saveData);
+  if (saved.length > 10) saved.length = 10;
+
+  try {
+    localStorage.setItem('packsmart_trips', JSON.stringify(saved));
+    showToast('Trip saved! You can load it later from the Report page.');
+    loadSavedTrips();
+  } catch (e) {
+    showToast('Could not save — storage may be full.', true);
+  }
+}
+
+function loadSavedTrips() {
+  const saved = JSON.parse(localStorage.getItem('packsmart_trips') || '[]');
+  const section = document.getElementById('saved-trips-section');
+  const list = document.getElementById('saved-trips-list');
+
+  if (saved.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  list.innerHTML = saved.map((trip, i) => `
+    <div class="saved-trip-card">
+      <div class="saved-trip-info">
+        <div class="saved-trip-name">${trip.name}</div>
+        <div class="saved-trip-date">Saved ${new Date(trip.savedAt).toLocaleDateString()}</div>
+      </div>
+      <div class="saved-trip-actions">
+        <button class="btn-outline" onclick="app.loadTrip(${i})">Load</button>
+        <button class="btn-secondary" onclick="app.deleteTrip(${i})" style="padding:8px 14px;font-size:0.8rem;">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadTrip(index) {
+  const saved = JSON.parse(localStorage.getItem('packsmart_trips') || '[]');
+  const trip = saved[index];
+  if (!trip) return;
+
+  state.tripParams = trip.tripParams;
+  state.activeTravelers = trip.activeTravelers;
+  state.packingGuide = trip.packingGuide;
+
+  for (const key of trip.activeTravelers) {
+    state.travelers[key] = trip.travelers[key];
+  }
+
+  // Restore max item ID
+  let maxId = 0;
+  for (const key of trip.activeTravelers) {
+    for (const item of (state.travelers[key].items || [])) {
+      if (item.id > maxId) maxId = item.id;
+    }
+  }
+  itemIdCounter = maxId;
+
+  // Restore form fields
+  document.getElementById('destination').value = state.tripParams.destination;
+  document.getElementById('duration').value = state.tripParams.duration;
+  document.getElementById('season').value = state.tripParams.season;
+  document.getElementById('laundromat').checked = state.tripParams.hasLaundromat;
+  document.getElementById('laundromat-label').textContent = state.tripParams.hasLaundromat ? 'Yes' : 'No';
+
+  document.querySelectorAll('#interests-grid input').forEach(el => {
+    el.checked = state.tripParams.interests.includes(el.value);
+    el.closest('.pill').classList.toggle('selected', el.checked);
+  });
+
+  // Restore traveler toggles
+  document.querySelectorAll('.traveler-toggle-card').forEach(card => {
+    const key = card.dataset.traveler;
+    if (key === 'self') return;
+    const isActive = state.activeTravelers.includes(key);
+    card.classList.toggle('selected', isActive);
+    const input = card.querySelector('input');
+    if (input) input.checked = isActive;
+  });
+
+  renderTravelerDetailSections();
+
+  // Jump to the report step if data is complete, otherwise wardrobe
+  if (state.activeTravelers.every(k => getTraveler(k).outfits)) {
+    state.currentStep = 6;
+    renderFinalReport();
+    renderStep(6);
+  } else {
+    state.currentStep = 4;
+    renderWardrobeTabs();
+    renderStep(4);
+  }
+
+  showToast('Trip loaded!');
+}
+
+function deleteTrip(index) {
+  const saved = JSON.parse(localStorage.getItem('packsmart_trips') || '[]');
+  saved.splice(index, 1);
+  localStorage.setItem('packsmart_trips', JSON.stringify(saved));
+  loadSavedTrips();
+  showToast('Saved trip deleted.');
 }
 
 // ===== Start Over =====
 function startOver() {
   state.currentStep = 1;
-  state.tripParams = { destination: '', duration: 0, climate: '', season: '', interests: [], hasLaundromat: false };
+  state.tripParams = { destination: '', duration: 0, season: '', interests: [], hasLaundromat: false };
   state.activeTravelers = ['self'];
-  state.travelers = { self: { luggageSize: '', items: [], packingAnalysis: null, outfits: null } };
+  state.travelers = { self: { gender: '', luggageSize: '', items: [], packingAnalysis: null, outfits: null } };
+  state.packingGuide = null;
   state.activeWardrobeTab = 'self';
-  state.activeAnalysisTab = 'self';
   state.activeOutfitsTab = 'self';
   itemIdCounter = 0;
 
   document.getElementById('destination').value = '';
   document.getElementById('duration').value = '';
-  document.getElementById('climate').value = '';
   document.getElementById('season').value = '';
   document.getElementById('laundromat').checked = false;
   document.getElementById('laundromat-label').textContent = 'No';
   document.querySelectorAll('#interests-grid input').forEach(el => { el.checked = false; el.closest('.pill').classList.remove('selected'); });
 
-  // Reset traveler toggles
   document.querySelectorAll('.traveler-toggle-card').forEach(card => {
     const key = card.dataset.traveler;
     if (key === 'self') return;
@@ -691,15 +914,15 @@ function startOver() {
     if (input) input.checked = false;
   });
 
-  document.getElementById('traveler-luggage-sections').innerHTML = '';
+  document.getElementById('traveler-detail-sections').innerHTML = '';
+  document.getElementById('packing-guide-content').innerHTML = `<div class="empty-state"><div class="empty-icon">🌤️</div><p>Your packing guide will appear here.</p></div>`;
   document.getElementById('wardrobe-tabs').innerHTML = '';
   document.getElementById('wardrobe-tab-content').innerHTML = '';
-  document.getElementById('analysis-tabs').innerHTML = '';
-  document.getElementById('analysis-tab-content').innerHTML = '';
   document.getElementById('outfits-tabs').innerHTML = '';
   document.getElementById('outfits-tab-content').innerHTML = '';
+  document.getElementById('report-content').innerHTML = '';
 
-  renderTravelerLuggageSections();
+  renderTravelerDetailSections();
   renderStep(1);
 }
 
@@ -715,7 +938,8 @@ function initUI() {
     document.getElementById('laundromat-label').textContent = this.checked ? 'Yes' : 'No';
   });
 
-  renderTravelerLuggageSections();
+  renderTravelerDetailSections();
+  loadSavedTrips();
 }
 
 // ===== Public app interface =====
@@ -724,11 +948,14 @@ const app = {
   handleFileInput,
   deleteItem,
   startOver,
-  downloadReport,
+  printReport,
+  saveTrip,
+  loadTrip,
+  deleteTrip,
   toggleTraveler,
+  setTravelerGender,
   setTravelerLuggage,
   switchWardrobeTab,
-  switchAnalysisTab,
   switchOutfitsTab,
 };
 

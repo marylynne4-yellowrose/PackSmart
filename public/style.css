@@ -338,14 +338,14 @@ select:focus {
 .traveler-toggle-name { font-size: 0.78rem; font-weight: 600; color: var(--text); }
 
 /* ===== Traveler Luggage Sections ===== */
-.traveler-luggage-section {
+.traveler-detail-section {
   margin-bottom: 20px;
   padding: 16px;
   background: var(--bg);
   border-radius: 12px;
 }
 
-.traveler-luggage-heading {
+.traveler-detail-heading {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--navy);
@@ -720,6 +720,257 @@ select:focus {
   margin-bottom: 12px;
 }
 
+/* ===== Packing Guide ===== */
+.climate-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #e8f4f8, #f0f7ff);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.climate-icon { font-size: 3rem; flex-shrink: 0; }
+
+.climate-info h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.climate-info p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.climate-details {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.climate-detail {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  background: rgba(255,255,255,0.7);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.traveler-guide-card {
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.traveler-guide-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.guide-section { margin-bottom: 14px; }
+.guide-section h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.guide-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guide-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--text);
+  padding: 3px 0;
+}
+
+.guide-check { color: var(--success); font-weight: 700; flex-shrink: 0; }
+.guide-dot { color: var(--primary); flex-shrink: 0; font-size: 0.6rem; margin-top: 4px; }
+
+/* ===== Final Report (on-screen) ===== */
+.report-section {
+  margin-bottom: 24px;
+}
+
+.report-section h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 10px;
+}
+
+.report-details-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.report-details-table td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+
+.report-details-table td:first-child {
+  font-weight: 600;
+  width: 30%;
+  background: var(--bg);
+}
+
+.report-traveler-section {
+  margin-bottom: 28px;
+  padding: 20px;
+  background: var(--bg);
+  border-radius: 12px;
+}
+
+.report-traveler-section h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+
+.report-traveler-section h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 16px 0 8px;
+}
+
+.report-traveler-section h5 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 8px 0 4px;
+}
+
+.report-items-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.report-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 80px;
+}
+
+.report-item img {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+}
+
+.report-item span {
+  font-size: 0.68rem;
+  text-align: center;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.report-analysis {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+}
+
+.report-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.report-outfit {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.report-outfit-thumbs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+.report-outfit-thumbs img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+/* ===== Saved Trips ===== */
+.saved-trips-section {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.saved-trip-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: var(--bg);
+}
+
+.saved-trip-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.saved-trip-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.saved-trip-actions {
+  display: flex;
+  gap: 6px;
+}
+
 /* ===== Loading Overlay ===== */
 .loading-overlay {
   position: fixed;
@@ -779,7 +1030,8 @@ select:focus {
 
 @media print {
   .app-header, .progress-bar-wrap, .loading-overlay, .toast,
-  .step-section, .main-content > *:not(#print-report) { display: none !important; }
+  .step-section, .main-content > *:not(#print-report),
+  .saved-trips-section, .btn-row { display: none !important; }
 
   .print-report {
     display: block !important;
@@ -791,10 +1043,19 @@ select:focus {
   .print-report h1 { font-size: 1.6rem; margin-bottom: 16px; }
   .print-report h2 { font-size: 1.2rem; margin: 20px 0 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
   .print-report h3 { font-size: 1rem; margin: 14px 0 4px; }
+  .print-report h4 { font-size: 0.9rem; margin: 10px 0 4px; }
+  .print-report h5 { font-size: 0.85rem; margin: 6px 0 2px; }
   .print-report p, .print-report li { font-size: 0.9rem; line-height: 1.5; }
   .print-report ul { margin-left: 20px; margin-bottom: 8px; }
-  .report-table { border-collapse: collapse; margin-bottom: 12px; width: 100%; }
-  .report-table td { padding: 4px 8px; border: 1px solid #ddd; font-size: 0.88rem; }
-  .report-table td:first-child { font-weight: 600; width: 35%; }
-  .report-outfit { margin-bottom: 10px; page-break-inside: avoid; }
+
+  .print-report .report-details-table { border-collapse: collapse; margin-bottom: 12px; width: 100%; }
+  .print-report .report-details-table td { padding: 4px 8px; border: 1px solid #ddd; font-size: 0.88rem; }
+  .print-report .report-details-table td:first-child { font-weight: 600; width: 35%; }
+
+  .print-report .report-traveler-section { page-break-inside: avoid; margin-bottom: 16px; padding: 12px; border: 1px solid #ddd; }
+  .print-report .report-items-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .print-report .report-item img { width: 60px; height: 60px; }
+  .print-report .report-outfit { margin-bottom: 10px; page-break-inside: avoid; }
+  .print-report .report-outfit-thumbs img { width: 40px; height: 40px; }
+  .print-report .report-score { width: 36px; height: 36px; font-size: 0.75rem; }
 }
