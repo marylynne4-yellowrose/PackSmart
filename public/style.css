@@ -746,6 +746,13 @@ select:focus {
   margin-bottom: 8px;
 }
 
+.label-hint {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
 .climate-details {
   display: flex;
   gap: 16px;
@@ -759,6 +766,56 @@ select:focus {
   background: rgba(255,255,255,0.7);
   padding: 4px 10px;
   border-radius: 6px;
+}
+
+.culture-summary-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #fef9f0, #fff5e6);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.culture-icon { font-size: 2.5rem; flex-shrink: 0; }
+
+.culture-info h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.culture-info p {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.culture-notes {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+}
+
+.culture-notes li {
+  font-size: 0.85rem;
+  color: var(--text);
+  padding: 4px 0;
+  padding-left: 16px;
+  position: relative;
+}
+
+.culture-notes li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--primary);
+  font-weight: 700;
 }
 
 .traveler-guide-card {
