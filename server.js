@@ -89,7 +89,7 @@ Trip details:
 Travelers:
 ${travelerDescriptions}
 
-Based on the destination and season, determine the expected climate. Then for each traveler, provide a personalized packing guide considering their gender, luggage size, and the planned activities. For pets, recommend travel supplies instead of clothing.
+Based on the destination and season, determine the expected climate and provide cultural information relevant to packing and travel (dress codes, customs, etiquette, local norms). Then for each traveler, provide a personalized packing guide considering their gender, luggage size, and the planned activities. For pets, recommend travel supplies instead of clothing.
 
 Return a JSON object with exactly these fields:
 {
@@ -99,6 +99,9 @@ Return a JSON object with exactly these fields:
   "tempRange": "expected temperature range (e.g. '72-88°F / 22-31°C')",
   "precipitation": "precipitation expectation (e.g. 'Low chance of rain')",
   "humidity": "humidity level (e.g. 'Moderate humidity')",
+  "cultureTitle": "short culture heading (e.g. 'Spanish Culture & Customs')",
+  "cultureSummary": "2-3 sentence overview of local culture relevant to travelers",
+  "cultureNotes": ["array of 4-6 specific cultural tips relevant to packing and behavior, e.g. dress codes for religious sites, tipping customs, dining etiquette, local fashion norms"],
   "travelerGuides": [
     {
       "travelerLabel": "traveler label from the list above",

@@ -143,11 +143,11 @@ function renderTravelerDetailSections() {
           { value: 'Large Carrier', icon: '🦮', name: 'Large Carrier', desc: 'Large dog' },
         ]
       : [
-          { value: 'Carry-on', icon: '🎒', name: 'Carry-on', desc: '≈ 20L' },
-          { value: 'Small',    icon: '🧳', name: 'Small',    desc: '≈ 35L' },
-          { value: 'Medium',   icon: '🧳', name: 'Medium',   desc: '≈ 55L' },
-          { value: 'Large',    icon: '🧳', name: 'Large',    desc: '≈ 75L' },
-          { value: 'Extra Large', icon: '🧳', name: 'Extra Large', desc: '≈ 100L+' },
+          { value: 'Carry-on', icon: '🎒', name: 'Carry-on', desc: '22 x 14 x 9 in · ≈ 20L' },
+          { value: 'Small',    icon: '🧳', name: 'Small',    desc: '20 x 14 x 8 in · ≈ 35L' },
+          { value: 'Medium',   icon: '🧳', name: 'Medium',   desc: '25 x 17 x 11 in · ≈ 55L' },
+          { value: 'Large',    icon: '🧳', name: 'Large',    desc: '28 x 19 x 12 in · ≈ 75L' },
+          { value: 'Extra Large', icon: '🧳', name: 'Extra Large', desc: '32 x 21 x 14 in · ≈ 100L+' },
         ];
 
     return `
@@ -330,6 +330,19 @@ function renderPackingGuide(data) {
         </div>
       </div>
     </div>
+
+    ${data.cultureTitle ? `
+    <div class="culture-summary-card">
+      <div class="culture-icon">🌍</div>
+      <div class="culture-info">
+        <h3>${data.cultureTitle}</h3>
+        <p>${data.cultureSummary || ''}</p>
+        ${(data.cultureNotes || []).length ? `
+        <ul class="culture-notes">
+          ${data.cultureNotes.map(note => `<li>${note}</li>`).join('')}
+        </ul>` : ''}
+      </div>
+    </div>` : ''}
   `;
 
   const guides = data.travelerGuides || [];
