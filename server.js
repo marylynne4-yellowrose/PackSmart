@@ -9,10 +9,8 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
 
 function extractJSON(text) {
-  // Strip markdown code fences if present
   const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fenceMatch) return fenceMatch[1].trim();
-  // Try to find raw JSON object or array
   const jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
   if (jsonMatch) return jsonMatch[1].trim();
   return text.trim();
@@ -24,7 +22,6 @@ app.post('/api/analyze-item', async (req, res) => {
     const { imageData } = req.body;
     if (!imageData) return res.status(400).json({ error: 'imageData is required' });
 
-    // Extract base64 data (strip data URI prefix if present)
     const base64Match = imageData.match(/^data:image\/(\w+);base64,(.+)$/);
     const mediaType = base64Match ? `image/${base64Match[1]}` : 'image/jpeg';
     const base64Data = base64Match ? base64Match[2] : imageData;
@@ -68,10 +65,71 @@ Return only valid JSON, no other text.`,
   }
 });
 
+// Generate packing guide with climate analysis
+app.post('/api/packing-guide', async (req, res) => {
+  try {
+    const { tripParams, travelers } = req.body;
+    if (!tripParams || !travelers) return res.status(400).json({ error: 'tripParams and travelers are required' });
+
+    const travelerDescriptions = travelers.map(t =>
+      t.isPet
+        ? `- ${t.label}: pet, luggage: ${t.luggageSize}`
+        : `- ${t.label}: gender: ${t.gender}, luggage: ${t.luggageSize}`
+    ).join('\n');
+
+    const prompt = `You are a professional travel packing consultant and climate expert.
+
+Trip details:
+- Destination: ${tripParams.destination}
+- Duration: ${tripParams.duration} days
+- Season: ${tripParams.season}
+- Interests/Activities: ${tripParams.interests.join(', ')}
+- Laundromat access: ${tripParams.hasLaundromat ? 'Yes' : 'No'}
+
+Travelers:
+${travelerDescriptions}
+
+Based on the destination and season, determine the expected climate. Then for each traveler, provide a personalized packing guide considering their gender, luggage size, and the planned activities. For pets, recommend travel supplies instead of clothing.
+
+Return a JSON object with exactly these fields:
+{
+  "climate": "climate type name (e.g. 'Mediterranean', 'Tropical', 'Temperate')",
+  "climateIcon": "single weather emoji representing the climate",
+  "climateSummary": "2-3 sentence description of weather conditions they can expect",
+  "tempRange": "expected temperature range (e.g. '72-88°F / 22-31°C')",
+  "precipitation": "precipitation expectation (e.g. 'Low chance of rain')",
+  "humidity": "humidity level (e.g. 'Moderate humidity')",
+  "travelerGuides": [
+    {
+      "travelerLabel": "traveler label from the list above",
+      "essentials": ["array of 8-12 essential items to pack, gender-appropriate"],
+      "recommended": ["array of 5-8 recommended but optional items"],
+      "tips": ["array of 3-4 personalized packing tips"]
+    }
+  ]
+}
+Return only valid JSON, no other text.`;
+
+    const message = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const rawText = message.content[0].text;
+    const jsonText = extractJSON(rawText);
+    const result = JSON.parse(jsonText);
+    res.json(result);
+  } catch (err) {
+    console.error('packing-guide error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Analyze the overall packing list against trip parameters
 app.post('/api/analyze-packing', async (req, res) => {
   try {
-    const { items, tripParams } = req.body;
+    const { items, tripParams, travelerLabel } = req.body;
     if (!items || !tripParams) return res.status(400).json({ error: 'items and tripParams are required' });
 
     const itemsText = items.map((item, i) => `${i + 1}. ${JSON.stringify(item)}`).join('\n');
@@ -80,11 +138,12 @@ app.post('/api/analyze-packing', async (req, res) => {
 Trip details:
 - Destination: ${tripParams.destination}
 - Duration: ${tripParams.duration} days
-- Climate: ${tripParams.climate}
 - Season: ${tripParams.season}
 - Interests/Activities: ${tripParams.interests.join(', ')}
 - Laundromat access: ${tripParams.hasLaundromat ? 'Yes' : 'No'}
 - Luggage size: ${tripParams.luggageSize}
+${tripParams.gender ? `- Gender: ${tripParams.gender}` : ''}
+${travelerLabel ? `- Packing for: ${travelerLabel}` : ''}
 
 Packed items (AI-identified):
 ${itemsText}
@@ -123,7 +182,7 @@ Return only valid JSON, no other text.`;
 // Generate outfit recommendations from packed items
 app.post('/api/get-outfits', async (req, res) => {
   try {
-    const { items, tripParams } = req.body;
+    const { items, tripParams, travelerLabel } = req.body;
     if (!items || !tripParams) return res.status(400).json({ error: 'items and tripParams are required' });
 
     const itemsText = items.map((item, i) => `${i + 1}. ${JSON.stringify(item)}`).join('\n');
@@ -135,15 +194,16 @@ Today's date: ${currentDate}
 Trip details:
 - Destination: ${tripParams.destination}
 - Duration: ${tripParams.duration} days
-- Climate: ${tripParams.climate}
 - Season: ${tripParams.season}
 - Interests/Activities: ${tripParams.interests.join(', ')}
 - Luggage size: ${tripParams.luggageSize}
+${tripParams.gender ? `- Gender: ${tripParams.gender}` : ''}
+${travelerLabel ? `- Styling for: ${travelerLabel}` : ''}
 
 Available clothing items (numbered):
 ${itemsText}
 
-Create outfit combinations that reuse items across multiple days. For each outfit, factor in current fashion trends relevant to the specific occasion/activity and destination (e.g. what's trending right now for business travel, beach days, city sightseeing, fine dining, or nightlife) — and reflect that in the styling description (think layering choices, accessory pairings, color combinations, and silhouettes that are currently popular). Only suggest trend-driven tweaks using items the traveler already has, or as an optional accessory note. Return a JSON object with exactly these fields:
+Create outfit combinations that reuse items across multiple days. For each outfit, factor in current fashion trends relevant to the specific occasion/activity and destination — and reflect that in the styling description. Only suggest trend-driven tweaks using items the traveler already has, or as an optional accessory note. Return a JSON object with exactly these fields:
 {
   "outfits": [
     {

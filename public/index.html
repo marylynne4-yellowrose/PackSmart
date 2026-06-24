@@ -43,17 +43,22 @@
         <div class="step-line"></div>
         <div class="step-indicator" data-step="3">
           <div class="step-dot"><span>3</span></div>
-          <div class="step-label">Wardrobe</div>
+          <div class="step-label">Packing Guide</div>
         </div>
         <div class="step-line"></div>
         <div class="step-indicator" data-step="4">
           <div class="step-dot"><span>4</span></div>
-          <div class="step-label">Analysis</div>
+          <div class="step-label">Wardrobe</div>
         </div>
         <div class="step-line"></div>
         <div class="step-indicator" data-step="5">
           <div class="step-dot"><span>5</span></div>
           <div class="step-label">Outfits</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-indicator" data-step="6">
+          <div class="step-dot"><span>6</span></div>
+          <div class="step-label">Report</div>
         </div>
       </div>
     </div>
@@ -75,19 +80,6 @@
           <div class="form-group">
             <label for="duration">Trip Duration (days)</label>
             <input type="number" id="duration" min="1" max="365" placeholder="7" />
-          </div>
-          <div class="form-group">
-            <label for="climate">Climate</label>
-            <select id="climate">
-              <option value="">Select climate…</option>
-              <option>Tropical</option>
-              <option>Arid/Desert</option>
-              <option>Mediterranean</option>
-              <option>Temperate</option>
-              <option>Cool/Rainy</option>
-              <option>Cold</option>
-              <option>Arctic</option>
-            </select>
           </div>
           <div class="form-group">
             <label for="season">Season</label>
@@ -142,7 +134,7 @@
     <section class="step-section" id="step-2">
       <div class="card">
         <h2 class="section-title">Who are you packing for?</h2>
-        <p class="section-desc">Select everyone you're responsible for packing, then choose a suitcase size for each person.</p>
+        <p class="section-desc">Select everyone you're responsible for packing, choose their gender and suitcase size.</p>
 
         <div class="traveler-toggles">
           <label class="traveler-toggle-card selected" data-traveler="self">
@@ -187,61 +179,86 @@
           </label>
         </div>
 
-        <div id="traveler-luggage-sections"></div>
+        <div id="traveler-detail-sections"></div>
 
         <div class="btn-row">
           <button class="btn-secondary" onclick="app.goToStep(1)">← Back</button>
-          <button class="btn-primary" onclick="app.goToStep(3)">Continue to Wardrobe →</button>
+          <button class="btn-primary" onclick="app.goToStep(3)">Get Packing Guide →</button>
         </div>
       </div>
     </section>
 
-    <!-- Step 3: My Wardrobe (per-traveler tabs) -->
+    <!-- Step 3: Packing Guide (AI-generated climate + what to pack per person) -->
     <section class="step-section" id="step-3">
       <div class="card">
-        <h2 class="section-title">Add Clothing Items</h2>
-        <p class="section-desc">Photograph or upload items you're considering packing for each traveler.</p>
+        <h2 class="section-title">Your Packing Guide</h2>
+        <p class="section-desc">Based on your destination and season, here's the climate you can expect and what each traveler should plan on packing.</p>
+
+        <div id="packing-guide-content">
+          <div class="empty-state">
+            <div class="empty-icon">🌤️</div>
+            <p>Your packing guide will appear here.</p>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="app.goToStep(2)">← Back</button>
+          <button class="btn-primary" onclick="app.goToStep(4)">Upload Your Items →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 4: Wardrobe (per-traveler tabs) -->
+    <section class="step-section" id="step-4">
+      <div class="card">
+        <h2 class="section-title">Upload Your Items</h2>
+        <p class="section-desc">Now photograph or upload the items you're planning to pack for each traveler so we can recommend outfits.</p>
 
         <div class="traveler-tabs" id="wardrobe-tabs"></div>
 
         <div id="wardrobe-tab-content"></div>
 
         <div class="btn-row">
-          <button class="btn-secondary" onclick="app.goToStep(2)">← Back</button>
-          <button class="btn-primary" onclick="app.goToStep(4)">Analyze Packing →</button>
+          <button class="btn-secondary" onclick="app.goToStep(3)">← Back</button>
+          <button class="btn-primary" onclick="app.goToStep(5)">Get Outfit Recommendations →</button>
         </div>
       </div>
     </section>
 
-    <!-- Step 4: Packing Analysis (per-traveler tabs) -->
-    <section class="step-section" id="step-4">
-      <div class="card">
-        <h2 class="section-title">Packing Analysis</h2>
-
-        <div class="traveler-tabs" id="analysis-tabs"></div>
-
-        <div id="analysis-tab-content"></div>
-
-        <div class="btn-row">
-          <button class="btn-secondary" onclick="app.goToStep(3)">← Back to Wardrobe</button>
-          <button class="btn-primary" onclick="app.goToStep(5)">See Outfit Plans →</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Step 5: Outfit Planner (per-traveler tabs) -->
+    <!-- Step 5: Analysis & Outfit Recommendations (per-traveler tabs) -->
     <section class="step-section" id="step-5">
       <div class="card">
-        <h2 class="section-title">Your Outfit Plans</h2>
+        <h2 class="section-title">Analysis &amp; Outfit Recommendations</h2>
 
         <div class="traveler-tabs" id="outfits-tabs"></div>
 
         <div id="outfits-tab-content"></div>
 
         <div class="btn-row">
-          <button class="btn-secondary" onclick="app.goToStep(4)">← Back to Analysis</button>
-          <button class="btn-outline" onclick="app.downloadReport()">🖨️ Download / Print Report</button>
+          <button class="btn-secondary" onclick="app.goToStep(4)">← Back to Wardrobe</button>
+          <button class="btn-primary" onclick="app.goToStep(6)">View Report →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 6: Final Report -->
+    <section class="step-section" id="step-6">
+      <div class="card">
+        <h2 class="section-title">Your PackSmart Report</h2>
+        <p class="section-desc">Review your complete packing plan below. You can save it for later, print it, or go back to make changes.</p>
+
+        <div id="report-content"></div>
+
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="app.goToStep(5)">← Back</button>
+          <button class="btn-outline" onclick="app.saveTrip()">💾 Save Trip</button>
+          <button class="btn-outline" onclick="app.printReport()">🖨️ Print / PDF</button>
           <button class="btn-primary" onclick="app.startOver()">Start New Trip ✈️</button>
+        </div>
+
+        <div class="saved-trips-section" id="saved-trips-section" style="display:none">
+          <h3 class="section-title" style="font-size:1.1rem; margin-top:28px;">Saved Trips</h3>
+          <div id="saved-trips-list"></div>
         </div>
       </div>
     </section>
