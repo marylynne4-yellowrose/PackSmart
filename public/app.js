@@ -1094,14 +1094,21 @@ function initUI() {
 }
 
 // ===== Calendar Reminders =====
-function addCalendarReminders() {
+function toggleCalendarMenu() {
+  const menu = document.getElementById('calendar-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+function addCalendarReminders(provider) {
+  document.getElementById('calendar-menu').style.display = 'none';
+
   const p = state.tripParams;
   if (!p.startDate) {
     showToast('Please set travel dates to add calendar reminders.', true);
     return;
   }
 
-  const startDate = new Date(p.startDate + 'T00:00:00');
+  const startDate = new Date(p.startDate + 'T09:00:00');
   const dest = p.destination || 'Trip';
 
   const threeDaysBefore = new Date(startDate);
@@ -1110,40 +1117,55 @@ function addCalendarReminders() {
   const oneDayBefore = new Date(startDate);
   oneDayBefore.setDate(oneDayBefore.getDate() - 1);
 
-  function formatGCalDate(d) {
-    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const organizeTitle = `PackSmart: Start Organizing for ${dest}`;
+  const organizeBody = `Your trip to ${dest} is in 3 days! Time to start organizing and gathering your items. Open PackSmart to review your packing guide.`;
+
+  const packTitle = `PackSmart: Start Packing for ${dest}`;
+  const packBody = `Your trip to ${dest} is tomorrow! Time to pack your bags. Open PackSmart to review your outfit recommendations and checklist.`;
+
+  if (provider === 'google') {
+    function formatGCalDate(d) {
+      return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    }
+    function makeGCalUrl(title, description, date) {
+      const end = new Date(date);
+      end.setHours(end.getHours() + 1);
+      const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: title,
+        details: description,
+        dates: `${formatGCalDate(date)}/${formatGCalDate(end)}`,
+      });
+      return `https://calendar.google.com/calendar/render?${params.toString()}`;
+    }
+    window.open(makeGCalUrl(organizeTitle, organizeBody, threeDaysBefore), '_blank');
+    setTimeout(() => {
+      window.open(makeGCalUrl(packTitle, packBody, oneDayBefore), '_blank');
+    }, 1500);
+  } else if (provider === 'outlook') {
+    function formatOutlookDate(d) {
+      return d.toISOString().split('.')[0] + '+00:00';
+    }
+    function makeOutlookUrl(title, description, date) {
+      const end = new Date(date);
+      end.setHours(end.getHours() + 1);
+      const params = new URLSearchParams({
+        path: '/calendar/action/compose',
+        rru: 'addevent',
+        subject: title,
+        body: description,
+        startdt: formatOutlookDate(date),
+        enddt: formatOutlookDate(end),
+      });
+      return `https://outlook.live.com/calendar/0/action/compose?${params.toString()}`;
+    }
+    window.open(makeOutlookUrl(organizeTitle, organizeBody, threeDaysBefore), '_blank');
+    setTimeout(() => {
+      window.open(makeOutlookUrl(packTitle, packBody, oneDayBefore), '_blank');
+    }, 1500);
   }
 
-  function makeGCalUrl(title, description, date) {
-    const endDate = new Date(date);
-    endDate.setHours(endDate.getHours() + 1);
-    const params = new URLSearchParams({
-      action: 'TEMPLATE',
-      text: title,
-      details: description,
-      dates: `${formatGCalDate(date)}/${formatGCalDate(endDate)}`,
-    });
-    return `https://calendar.google.com/calendar/render?${params.toString()}`;
-  }
-
-  const organizeUrl = makeGCalUrl(
-    `🧳 PackSmart: Start Organizing for ${dest}`,
-    `Your trip to ${dest} is in 3 days! Time to start organizing and gathering your items. Open PackSmart to review your packing guide.`,
-    threeDaysBefore
-  );
-
-  const packUrl = makeGCalUrl(
-    `🧳 PackSmart: Start Packing for ${dest}`,
-    `Your trip to ${dest} is tomorrow! Time to pack your bags. Open PackSmart to review your outfit recommendations and checklist.`,
-    oneDayBefore
-  );
-
-  window.open(organizeUrl, '_blank');
-  setTimeout(() => {
-    window.open(packUrl, '_blank');
-  }, 1500);
-
-  showToast('Calendar events opening — save them to get reminders!');
+  showToast(`${provider === 'google' ? 'Google Calendar' : 'Outlook'} events opening — save them to get reminders!`);
 }
 
 // ===== Public app interface =====
@@ -1162,6 +1184,7 @@ const app = {
   setTransportMode,
   updateTransportDetail,
   addCalendarReminders,
+  toggleCalendarMenu,
   switchWardrobeTab,
   switchOutfitsTab,
 };
