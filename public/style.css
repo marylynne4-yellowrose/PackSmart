@@ -762,6 +762,56 @@ select:focus {
   border-radius: 12px;
 }
 
+/* ===== Airport Selection ===== */
+#airport-select-container {
+  margin-top: 12px;
+}
+
+#airport-select-container > label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.airport-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.airport-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.airport-option:hover { border-color: var(--primary); }
+.airport-option input { display: none; }
+.airport-option.selected {
+  border-color: var(--primary);
+  background: rgba(233, 108, 53, 0.06);
+}
+
+.airport-code {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+  min-width: 36px;
+}
+
+.airport-name {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
 /* ===== Calendar Dropdown ===== */
 .calendar-dropdown {
   position: relative;
