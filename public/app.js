@@ -281,14 +281,14 @@ function setTransportMode(mode) {
     container.innerHTML = `
       <div class="form-grid">
         <div class="form-group">
-          <label for="departure-airport">Departure Airport</label>
-          <input type="text" id="departure-airport" placeholder="e.g. LAX, JFK, ORD"
+          <label for="departure-airport">Departure Airport <span class="label-hint">(Provide the airport code e.g. ORD, LAX or provide city and state)</span></label>
+          <input type="text" id="departure-airport" placeholder="e.g. LAX, JFK, or Chicago, IL"
             oninput="app.updateTransportDetail('airport', this.value)" />
         </div>
         <div class="form-group">
-          <label for="flight-time">Approximate Departure Time</label>
-          <input type="time" id="flight-time"
-            onchange="app.updateTransportDetail('departureTime', this.value)" />
+          <label for="flight-time">Approximate Departure Time <span class="label-hint">(hour:minute AM or PM)</span></label>
+          <input type="text" id="flight-time" placeholder="e.g. 7:30 AM"
+            oninput="app.updateTransportDetail('departureTime', this.value)" />
         </div>
       </div>
     `;
@@ -301,9 +301,9 @@ function setTransportMode(mode) {
             oninput="app.updateTransportDetail('station', this.value)" />
         </div>
         <div class="form-group">
-          <label for="train-time">Approximate Departure Time</label>
-          <input type="time" id="train-time"
-            onchange="app.updateTransportDetail('departureTime', this.value)" />
+          <label for="train-time">Approximate Departure Time <span class="label-hint">(hour:minute AM or PM)</span></label>
+          <input type="text" id="train-time" placeholder="e.g. 9:00 AM"
+            oninput="app.updateTransportDetail('departureTime', this.value)" />
         </div>
       </div>
     `;
@@ -316,9 +316,9 @@ function setTransportMode(mode) {
             oninput="app.updateTransportDetail('departureCity', this.value)" />
         </div>
         <div class="form-group">
-          <label for="drive-time">Planned Departure Time</label>
-          <input type="time" id="drive-time"
-            onchange="app.updateTransportDetail('departureTime', this.value)" />
+          <label for="drive-time">Planned Departure Time <span class="label-hint">(hour:minute AM or PM)</span></label>
+          <input type="text" id="drive-time" placeholder="e.g. 6:00 AM"
+            oninput="app.updateTransportDetail('departureTime', this.value)" />
         </div>
       </div>
     `;
