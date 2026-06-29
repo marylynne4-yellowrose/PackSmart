@@ -132,6 +132,29 @@
           </div>
         </div>
 
+        <div class="form-group full-width">
+          <label>Mode of Transportation</label>
+          <div class="transport-grid" id="transport-grid">
+            <label class="transport-card" data-mode="flying">
+              <input type="radio" name="transport" value="flying" onchange="app.setTransportMode('flying')" />
+              <span class="transport-icon">✈️</span>
+              <span class="transport-name">Flying</span>
+            </label>
+            <label class="transport-card" data-mode="train">
+              <input type="radio" name="transport" value="train" onchange="app.setTransportMode('train')" />
+              <span class="transport-icon">🚆</span>
+              <span class="transport-name">Train</span>
+            </label>
+            <label class="transport-card" data-mode="driving">
+              <input type="radio" name="transport" value="driving" onchange="app.setTransportMode('driving')" />
+              <span class="transport-icon">🚗</span>
+              <span class="transport-name">Driving</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="transport-details" class="transport-details" style="display:none"></div>
+
         <div class="btn-row">
           <button class="btn-primary" onclick="app.goToStep(2)">Continue to Travelers →</button>
         </div>
@@ -259,6 +282,7 @@
 
         <div class="btn-row">
           <button class="btn-secondary" onclick="app.goToStep(5)">← Back</button>
+          <button class="btn-outline" onclick="app.addCalendarReminders()">📅 Add Reminders to Calendar</button>
           <button class="btn-outline" onclick="app.saveTrip()">💾 Save Trip</button>
           <button class="btn-outline" onclick="app.printReport()">🖨️ Print / PDF</button>
           <button class="btn-primary" onclick="app.startOver()">Start New Trip ✈️</button>

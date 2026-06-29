@@ -720,6 +720,46 @@ select:focus {
   margin-bottom: 12px;
 }
 
+/* ===== Transportation Cards ===== */
+.transport-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.transport-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 24px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 100px;
+  text-align: center;
+  user-select: none;
+}
+
+.transport-card:hover { border-color: var(--primary); }
+.transport-card input { display: none; }
+.transport-card.selected {
+  border-color: var(--primary);
+  background: rgba(233, 108, 53, 0.06);
+}
+
+.transport-icon { font-size: 1.8rem; }
+.transport-name { font-size: 0.8rem; font-weight: 600; color: var(--text); }
+
+.transport-details {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--bg);
+  border-radius: 12px;
+}
+
 /* ===== Packing Guide ===== */
 .climate-summary-card {
   display: flex;
@@ -791,6 +831,56 @@ select:focus {
   font-size: 0.88rem;
   color: var(--text);
   line-height: 1.5;
+}
+
+.logistics-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #e8ffe8, #f0fff0);
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.logistics-icon { font-size: 2.5rem; flex-shrink: 0; }
+
+.logistics-info h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.logistics-info p {
+  font-size: 0.88rem;
+  color: var(--text);
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.logistics-tips {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+}
+
+.logistics-tips li {
+  font-size: 0.85rem;
+  color: var(--text);
+  padding: 4px 0 4px 16px;
+  position: relative;
+}
+
+.logistics-tips li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--success);
+  font-weight: 700;
 }
 
 .culture-summary-card {

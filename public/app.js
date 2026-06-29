@@ -21,6 +21,8 @@ const state = {
     season: '',
     interests: [],
     hasLaundromat: false,
+    transportMode: '',
+    transportDetails: {},
   },
   activeTravelers: ['self'],
   travelers: {
@@ -217,6 +219,7 @@ function validateStep(step) {
     if (!p.duration || p.duration < 1) { showToast('Please enter trip duration.', true); return false; }
     if (!p.season) { showToast('Please select a season.', true); return false; }
     if (p.interests.length === 0) { showToast('Please select at least one interest.', true); return false; }
+    if (!p.transportMode) { showToast('Please select a mode of transportation.', true); return false; }
   }
   if (step === 2) {
     for (const key of state.activeTravelers) {
@@ -256,9 +259,74 @@ function collectTripParams(peek = false) {
     season: document.getElementById('season').value,
     interests: [...document.querySelectorAll('#interests-grid input:checked')].map(el => el.value),
     hasLaundromat: document.getElementById('laundromat').checked,
+    transportMode: state.tripParams.transportMode,
+    transportDetails: state.tripParams.transportDetails,
   };
   if (!peek) Object.assign(state.tripParams, p);
   return p;
+}
+
+function setTransportMode(mode) {
+  state.tripParams.transportMode = mode;
+  state.tripParams.transportDetails = {};
+
+  document.querySelectorAll('.transport-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.mode === mode);
+  });
+
+  const container = document.getElementById('transport-details');
+  container.style.display = 'block';
+
+  if (mode === 'flying') {
+    container.innerHTML = `
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="departure-airport">Departure Airport</label>
+          <input type="text" id="departure-airport" placeholder="e.g. LAX, JFK, ORD"
+            oninput="app.updateTransportDetail('airport', this.value)" />
+        </div>
+        <div class="form-group">
+          <label for="flight-time">Approximate Departure Time</label>
+          <input type="time" id="flight-time"
+            onchange="app.updateTransportDetail('departureTime', this.value)" />
+        </div>
+      </div>
+    `;
+  } else if (mode === 'train') {
+    container.innerHTML = `
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="departure-station">Departure Train Station</label>
+          <input type="text" id="departure-station" placeholder="e.g. Penn Station, Union Station"
+            oninput="app.updateTransportDetail('station', this.value)" />
+        </div>
+        <div class="form-group">
+          <label for="train-time">Approximate Departure Time</label>
+          <input type="time" id="train-time"
+            onchange="app.updateTransportDetail('departureTime', this.value)" />
+        </div>
+      </div>
+    `;
+  } else if (mode === 'driving') {
+    container.innerHTML = `
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="departure-city">Departing From (City)</label>
+          <input type="text" id="departure-city" placeholder="e.g. Los Angeles, CA"
+            oninput="app.updateTransportDetail('departureCity', this.value)" />
+        </div>
+        <div class="form-group">
+          <label for="drive-time">Planned Departure Time</label>
+          <input type="time" id="drive-time"
+            onchange="app.updateTransportDetail('departureTime', this.value)" />
+        </div>
+      </div>
+    `;
+  }
+}
+
+function updateTransportDetail(key, value) {
+  state.tripParams.transportDetails[key] = value;
 }
 
 function renderStep(step) {
@@ -341,6 +409,19 @@ function renderPackingGuide(data) {
       <div class="weather-forecast-info">
         <h3>Weather Forecast for Your Dates</h3>
         <p>${data.weatherForecast}</p>
+      </div>
+    </div>` : ''}
+
+    ${data.travelLogistics ? `
+    <div class="logistics-card">
+      <div class="logistics-icon">${data.travelLogistics.icon || '🚏'}</div>
+      <div class="logistics-info">
+        <h3>${data.travelLogistics.title || 'Travel Logistics'}</h3>
+        <p>${data.travelLogistics.summary || ''}</p>
+        ${(data.travelLogistics.tips || []).length ? `
+        <ul class="logistics-tips">
+          ${data.travelLogistics.tips.map(tip => `<li>${tip}</li>`).join('')}
+        </ul>` : ''}
       </div>
     </div>` : ''}
 
@@ -693,6 +774,7 @@ function renderFinalReport() {
         <tr><td>Season</td><td>${p.season}</td></tr>
         <tr><td>Activities</td><td>${p.interests.join(', ')}</td></tr>
         <tr><td>Laundromat</td><td>${p.hasLaundromat ? 'Yes' : 'No'}</td></tr>
+        ${p.transportMode ? `<tr><td>Transportation</td><td>${p.transportMode === 'flying' ? '✈️ Flying' : p.transportMode === 'train' ? '🚆 Train' : '🚗 Driving'}${p.transportDetails.airport ? ` from ${p.transportDetails.airport}` : ''}${p.transportDetails.station ? ` from ${p.transportDetails.station}` : ''}${p.transportDetails.departureCity ? ` from ${p.transportDetails.departureCity}` : ''}${p.transportDetails.departureTime ? ` at ${p.transportDetails.departureTime}` : ''}</td></tr>` : ''}
         <tr><td>Travelers</td><td>${state.activeTravelers.map(k => TRAVELER_DEFS[k].label).join(', ')}</td></tr>
       </table>
     </div>
@@ -883,6 +965,20 @@ function loadTrip(index) {
     el.closest('.pill').classList.toggle('selected', el.checked);
   });
 
+  if (state.tripParams.transportMode) {
+    const radio = document.querySelector(`input[name="transport"][value="${state.tripParams.transportMode}"]`);
+    if (radio) radio.checked = true;
+    setTransportMode(state.tripParams.transportMode);
+    const d = state.tripParams.transportDetails || {};
+    if (d.airport) document.getElementById('departure-airport').value = d.airport;
+    if (d.station) document.getElementById('departure-station').value = d.station;
+    if (d.departureCity) document.getElementById('departure-city').value = d.departureCity;
+    if (d.departureTime) {
+      const timeInput = document.querySelector('#transport-details input[type="time"]');
+      if (timeInput) timeInput.value = d.departureTime;
+    }
+  }
+
   // Restore traveler toggles
   document.querySelectorAll('.traveler-toggle-card').forEach(card => {
     const key = card.dataset.traveler;
@@ -920,7 +1016,7 @@ function deleteTrip(index) {
 // ===== Start Over =====
 function startOver() {
   state.currentStep = 1;
-  state.tripParams = { destination: '', duration: 0, startDate: '', endDate: '', season: '', interests: [], hasLaundromat: false };
+  state.tripParams = { destination: '', duration: 0, startDate: '', endDate: '', season: '', interests: [], hasLaundromat: false, transportMode: '', transportDetails: {} };
   state.activeTravelers = ['self'];
   state.travelers = { self: { gender: '', luggageSize: '', items: [], packingAnalysis: null, outfits: null } };
   state.packingGuide = null;
@@ -936,6 +1032,10 @@ function startOver() {
   document.getElementById('laundromat').checked = false;
   document.getElementById('laundromat-label').textContent = 'No';
   document.querySelectorAll('#interests-grid input').forEach(el => { el.checked = false; el.closest('.pill').classList.remove('selected'); });
+  document.querySelectorAll('.transport-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('input[name="transport"]').forEach(el => el.checked = false);
+  document.getElementById('transport-details').style.display = 'none';
+  document.getElementById('transport-details').innerHTML = '';
 
   document.querySelectorAll('.traveler-toggle-card').forEach(card => {
     const key = card.dataset.traveler;
@@ -993,6 +1093,59 @@ function initUI() {
   loadSavedTrips();
 }
 
+// ===== Calendar Reminders =====
+function addCalendarReminders() {
+  const p = state.tripParams;
+  if (!p.startDate) {
+    showToast('Please set travel dates to add calendar reminders.', true);
+    return;
+  }
+
+  const startDate = new Date(p.startDate + 'T00:00:00');
+  const dest = p.destination || 'Trip';
+
+  const threeDaysBefore = new Date(startDate);
+  threeDaysBefore.setDate(threeDaysBefore.getDate() - 3);
+
+  const oneDayBefore = new Date(startDate);
+  oneDayBefore.setDate(oneDayBefore.getDate() - 1);
+
+  function formatGCalDate(d) {
+    return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  }
+
+  function makeGCalUrl(title, description, date) {
+    const endDate = new Date(date);
+    endDate.setHours(endDate.getHours() + 1);
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: title,
+      details: description,
+      dates: `${formatGCalDate(date)}/${formatGCalDate(endDate)}`,
+    });
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
+  }
+
+  const organizeUrl = makeGCalUrl(
+    `🧳 PackSmart: Start Organizing for ${dest}`,
+    `Your trip to ${dest} is in 3 days! Time to start organizing and gathering your items. Open PackSmart to review your packing guide.`,
+    threeDaysBefore
+  );
+
+  const packUrl = makeGCalUrl(
+    `🧳 PackSmart: Start Packing for ${dest}`,
+    `Your trip to ${dest} is tomorrow! Time to pack your bags. Open PackSmart to review your outfit recommendations and checklist.`,
+    oneDayBefore
+  );
+
+  window.open(organizeUrl, '_blank');
+  setTimeout(() => {
+    window.open(packUrl, '_blank');
+  }, 1500);
+
+  showToast('Calendar events opening — save them to get reminders!');
+}
+
 // ===== Public app interface =====
 const app = {
   goToStep,
@@ -1006,6 +1159,9 @@ const app = {
   toggleTraveler,
   setTravelerGender,
   setTravelerLuggage,
+  setTransportMode,
+  updateTransportDetail,
+  addCalendarReminders,
   switchWardrobeTab,
   switchOutfitsTab,
 };

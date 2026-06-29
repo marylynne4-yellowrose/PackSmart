@@ -86,11 +86,23 @@ ${tripParams.startDate && tripParams.endDate ? `- Travel dates: ${tripParams.sta
 - Season: ${tripParams.season}
 - Interests/Activities: ${tripParams.interests.join(', ')}
 - Laundromat access: ${tripParams.hasLaundromat ? 'Yes' : 'No'}
+${tripParams.transportMode ? `- Transportation: ${tripParams.transportMode}` : ''}
+${tripParams.transportDetails?.airport ? `- Departure airport: ${tripParams.transportDetails.airport}` : ''}
+${tripParams.transportDetails?.station ? `- Departure station: ${tripParams.transportDetails.station}` : ''}
+${tripParams.transportDetails?.departureCity ? `- Departing from: ${tripParams.transportDetails.departureCity}` : ''}
+${tripParams.transportDetails?.departureTime ? `- Departure time: ${tripParams.transportDetails.departureTime}` : ''}
 
 Travelers:
 ${travelerDescriptions}
 
-Based on the destination, season, and specific travel dates (if provided), determine the expected climate and provide a weather assessment for those exact dates — including what the weather will most likely be or is historically known to be during that time of year. Also provide cultural information relevant to packing and travel (dress codes, customs, etiquette, local norms). Then for each traveler, provide a personalized packing guide considering their gender, luggage size, and the planned activities. For pets, recommend travel supplies instead of clothing.
+Based on the destination, season, and specific travel dates (if provided), determine the expected climate and provide a weather assessment for those exact dates — including what the weather will most likely be or is historically known to be during that time of year. Also provide cultural information relevant to packing and travel (dress codes, customs, etiquette, local norms).
+
+If transportation mode is provided, include travel logistics advice:
+- For FLYING: Based on the departure airport and time, provide TSA security wait time estimates (typical and peak), recommend what time to arrive at the airport, and note any airport-specific tips (terminal info, pre-check availability). Consider time of day, day of week, and season for wait time estimates.
+- For TRAIN: Based on the departure station and time, provide Amtrak check-in recommendations, luggage check-in timing, recommend what time to arrive at the station, and note any station-specific tips.
+- For DRIVING: Based on the departure city, destination, and departure time, provide expected traffic conditions, estimated drive time, and recommend the best departure window to avoid congestion.
+
+Then for each traveler, provide a personalized packing guide considering their gender, luggage size, and the planned activities. For pets, recommend travel supplies instead of clothing.
 
 Return a JSON object with exactly these fields:
 {
@@ -104,6 +116,12 @@ Return a JSON object with exactly these fields:
   "cultureTitle": "short culture heading (e.g. 'Spanish Culture & Customs')",
   "cultureSummary": "2-3 sentence overview of local culture relevant to travelers",
   "cultureNotes": ["array of 4-6 specific cultural tips relevant to packing and behavior, e.g. dress codes for religious sites, tipping customs, dining etiquette, local fashion norms"],
+  "travelLogistics": {
+    "icon": "emoji for mode of transport (✈️, 🚆, or 🚗)",
+    "title": "heading like 'Flying from LAX' or 'Driving from Los Angeles'",
+    "summary": "2-3 sentence overview with specific arrival time recommendation and wait time estimate",
+    "tips": ["array of 3-5 specific logistics tips, e.g. TSA PreCheck lines, terminal info, traffic patterns, luggage policies"]
+  },
   "travelerGuides": [
     {
       "travelerLabel": "traveler label from the list above",
