@@ -189,6 +189,196 @@ function setTravelerLuggage(key, value) {
   });
 }
 
+// ===== Airport Database =====
+const AIRPORTS = {
+  'chicago': [
+    { code: 'ORD', name: "O'Hare International Airport" },
+    { code: 'MDW', name: 'Midway International Airport' },
+  ],
+  'new york': [
+    { code: 'JFK', name: 'John F. Kennedy International Airport' },
+    { code: 'LGA', name: 'LaGuardia Airport' },
+    { code: 'EWR', name: 'Newark Liberty International Airport' },
+  ],
+  'los angeles': [
+    { code: 'LAX', name: 'Los Angeles International Airport' },
+    { code: 'BUR', name: 'Hollywood Burbank Airport' },
+    { code: 'SNA', name: 'John Wayne Airport (Orange County)' },
+    { code: 'LGB', name: 'Long Beach Airport' },
+    { code: 'ONT', name: 'Ontario International Airport' },
+  ],
+  'san francisco': [
+    { code: 'SFO', name: 'San Francisco International Airport' },
+    { code: 'OAK', name: 'Oakland International Airport' },
+    { code: 'SJC', name: 'San Jose International Airport' },
+  ],
+  'washington': [
+    { code: 'DCA', name: 'Ronald Reagan Washington National Airport' },
+    { code: 'IAD', name: 'Washington Dulles International Airport' },
+    { code: 'BWI', name: 'Baltimore/Washington International Airport' },
+  ],
+  'dallas': [
+    { code: 'DFW', name: 'Dallas/Fort Worth International Airport' },
+    { code: 'DAL', name: 'Dallas Love Field' },
+  ],
+  'houston': [
+    { code: 'IAH', name: 'George Bush Intercontinental Airport' },
+    { code: 'HOU', name: 'William P. Hobby Airport' },
+  ],
+  'miami': [
+    { code: 'MIA', name: 'Miami International Airport' },
+    { code: 'FLL', name: 'Fort Lauderdale-Hollywood International Airport' },
+    { code: 'PBI', name: 'Palm Beach International Airport' },
+  ],
+  'detroit': [
+    { code: 'DTW', name: 'Detroit Metropolitan Wayne County Airport' },
+    { code: 'FNT', name: 'Bishop International Airport (Flint)' },
+  ],
+  'tampa': [
+    { code: 'TPA', name: 'Tampa International Airport' },
+    { code: 'PIE', name: 'St. Pete-Clearwater International Airport' },
+    { code: 'SRQ', name: 'Sarasota Bradenton International Airport' },
+  ],
+  'orlando': [
+    { code: 'MCO', name: 'Orlando International Airport' },
+    { code: 'SFB', name: 'Orlando Sanford International Airport' },
+  ],
+  'minneapolis': [
+    { code: 'MSP', name: 'Minneapolis-Saint Paul International Airport' },
+  ],
+  'denver': [
+    { code: 'DEN', name: 'Denver International Airport' },
+  ],
+  'seattle': [
+    { code: 'SEA', name: 'Seattle-Tacoma International Airport' },
+  ],
+  'atlanta': [
+    { code: 'ATL', name: 'Hartsfield-Jackson Atlanta International Airport' },
+  ],
+  'boston': [
+    { code: 'BOS', name: 'Boston Logan International Airport' },
+  ],
+  'phoenix': [
+    { code: 'PHX', name: 'Phoenix Sky Harbor International Airport' },
+    { code: 'AZA', name: 'Phoenix-Mesa Gateway Airport' },
+  ],
+  'philadelphia': [
+    { code: 'PHL', name: 'Philadelphia International Airport' },
+  ],
+  'san diego': [
+    { code: 'SAN', name: 'San Diego International Airport' },
+  ],
+  'charlotte': [
+    { code: 'CLT', name: 'Charlotte Douglas International Airport' },
+  ],
+  'las vegas': [
+    { code: 'LAS', name: 'Harry Reid International Airport' },
+  ],
+  'nashville': [
+    { code: 'BNA', name: 'Nashville International Airport' },
+  ],
+  'austin': [
+    { code: 'AUS', name: 'Austin-Bergstrom International Airport' },
+  ],
+  'portland': [
+    { code: 'PDX', name: 'Portland International Airport' },
+  ],
+  'salt lake city': [
+    { code: 'SLC', name: 'Salt Lake City International Airport' },
+  ],
+  'st louis': [
+    { code: 'STL', name: 'St. Louis Lambert International Airport' },
+  ],
+  'pittsburgh': [
+    { code: 'PIT', name: 'Pittsburgh International Airport' },
+  ],
+  'cleveland': [
+    { code: 'CLE', name: 'Cleveland Hopkins International Airport' },
+  ],
+  'cincinnati': [
+    { code: 'CVG', name: 'Cincinnati/Northern Kentucky International Airport' },
+  ],
+  'kansas city': [
+    { code: 'MCI', name: 'Kansas City International Airport' },
+  ],
+  'indianapolis': [
+    { code: 'IND', name: 'Indianapolis International Airport' },
+  ],
+  'new orleans': [
+    { code: 'MSY', name: 'Louis Armstrong New Orleans International Airport' },
+  ],
+  'raleigh': [
+    { code: 'RDU', name: 'Raleigh-Durham International Airport' },
+  ],
+  'san antonio': [
+    { code: 'SAT', name: 'San Antonio International Airport' },
+  ],
+  'honolulu': [
+    { code: 'HNL', name: 'Daniel K. Inouye International Airport' },
+  ],
+  'anchorage': [
+    { code: 'ANC', name: 'Ted Stevens Anchorage International Airport' },
+  ],
+};
+
+function lookupAirports(input) {
+  const val = input.trim().toLowerCase();
+  if (!val) return null;
+
+  // Check if it looks like an airport code (2-4 uppercase letters)
+  if (/^[a-z]{2,4}$/i.test(val)) return null;
+
+  // Strip state abbreviations and common separators
+  const cityPart = val.replace(/,?\s*[a-z]{2}$/i, '').trim();
+
+  for (const [city, airports] of Object.entries(AIRPORTS)) {
+    if (city.includes(cityPart) || cityPart.includes(city)) {
+      return airports;
+    }
+  }
+  return null;
+}
+
+function handleAirportInput(value) {
+  state.tripParams.transportDetails.airport = value;
+
+  const matchedAirports = lookupAirports(value);
+  const selectContainer = document.getElementById('airport-select-container');
+
+  if (matchedAirports && matchedAirports.length > 0) {
+    selectContainer.style.display = 'block';
+    selectContainer.innerHTML = `
+      <label>Select Your Airport</label>
+      <div class="airport-options">
+        ${matchedAirports.map(ap => `
+          <label class="airport-option ${state.tripParams.transportDetails.selectedAirport === ap.code ? 'selected' : ''}">
+            <input type="radio" name="airport-select" value="${ap.code}"
+              ${state.tripParams.transportDetails.selectedAirport === ap.code ? 'checked' : ''}
+              onchange="app.selectAirport('${ap.code}', '${ap.name.replace(/'/g, "\\'")}')" />
+            <span class="airport-code">${ap.code}</span>
+            <span class="airport-name">(${ap.name})</span>
+          </label>
+        `).join('')}
+      </div>
+    `;
+  } else {
+    selectContainer.style.display = 'none';
+    selectContainer.innerHTML = '';
+    state.tripParams.transportDetails.selectedAirport = '';
+    state.tripParams.transportDetails.selectedAirportName = '';
+  }
+}
+
+function selectAirport(code, name) {
+  state.tripParams.transportDetails.selectedAirport = code;
+  state.tripParams.transportDetails.selectedAirportName = name;
+  state.tripParams.transportDetails.airport = `${code} (${name})`;
+
+  document.querySelectorAll('.airport-option').forEach(opt => {
+    opt.classList.toggle('selected', opt.querySelector('input').value === code);
+  });
+}
+
 // ===== Step Navigation =====
 async function goToStep(step) {
   if (step > state.currentStep) {
@@ -283,7 +473,7 @@ function setTransportMode(mode) {
         <div class="form-group">
           <label for="departure-airport">Departure Airport <span class="label-hint">(Provide the airport code e.g. ORD, LAX or provide city and state)</span></label>
           <input type="text" id="departure-airport" placeholder="e.g. LAX, JFK, or Chicago, IL"
-            oninput="app.updateTransportDetail('airport', this.value)" />
+            oninput="app.handleAirportInput(this.value)" />
         </div>
         <div class="form-group">
           <label for="flight-time">Approximate Departure Time <span class="label-hint">(hour:minute AM or PM)</span></label>
@@ -291,6 +481,7 @@ function setTransportMode(mode) {
             oninput="app.updateTransportDetail('departureTime', this.value)" />
         </div>
       </div>
+      <div id="airport-select-container" style="display:none"></div>
     `;
   } else if (mode === 'train') {
     container.innerHTML = `
@@ -1183,6 +1374,8 @@ const app = {
   setTravelerLuggage,
   setTransportMode,
   updateTransportDetail,
+  handleAirportInput,
+  selectAirport,
   addCalendarReminders,
   toggleCalendarMenu,
   switchWardrobeTab,
