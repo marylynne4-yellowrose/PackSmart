@@ -1319,6 +1319,20 @@ select:focus {
 .premium-notice-body { font-size: 0.875rem; color: var(--text); line-height: 1.5; }
 .premium-notice-body strong { color: var(--primary); }
 
+.premium-notice-list {
+  margin: 8px 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.premium-notice-list li {
+  font-size: 0.875rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
 /* ===== Wardrobe Choice ===== */
 .wardrobe-choice-row {
   display: flex;
