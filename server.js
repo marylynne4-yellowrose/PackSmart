@@ -86,7 +86,6 @@ ${tripParams.startDate && tripParams.endDate ? `- Travel dates: ${tripParams.sta
 - Season: ${tripParams.season}
 - Interests/Activities: ${tripParams.interests.join(', ')}
 - Laundromat access: ${tripParams.hasLaundromat ? 'Yes' : 'No'}
-${tripParams.accommodation ? `- Accommodation: ${tripParams.accommodation}` : ''}
 ${tripParams.transportMode ? `- Transportation: ${tripParams.transportMode}` : ''}
 ${tripParams.transportDetails?.airport ? `- Departure airport: ${tripParams.transportDetails.airport}` : ''}
 ${tripParams.transportDetails?.station ? `- Departure station: ${tripParams.transportDetails.station}` : ''}
@@ -103,9 +102,7 @@ If transportation mode is provided, include travel logistics advice:
 - For TRAIN: Based on the departure station and time, provide Amtrak check-in recommendations, luggage check-in timing, recommend what time to arrive at the station, and note any station-specific tips.
 - For DRIVING: Based on the departure city, destination, and departure time, provide expected traffic conditions, estimated drive time, and recommend the best departure window to avoid congestion.
 
-Then for each traveler, provide a personalized packing guide split into three clear categories. For pets, recommend travel supplies instead of clothing.
-
-Also provide local recommendations near the destination (grocery stores, pharmacies, clothing stores, restaurants) tailored to the accommodation type and activities.
+Then for each traveler, provide a personalized packing guide considering their gender, luggage size, and the planned activities. For pets, recommend travel supplies instead of clothing.
 
 Return a JSON object with exactly these fields:
 {
@@ -115,29 +112,21 @@ Return a JSON object with exactly these fields:
   "tempRange": "expected temperature range (e.g. '72-88°F / 22-31°C')",
   "precipitation": "precipitation expectation (e.g. 'Low chance of rain')",
   "humidity": "humidity level (e.g. 'Moderate humidity')",
-  "weatherForecast": "2-3 sentence specific weather assessment for the exact travel dates based on historical data and seasonal patterns",
+  "weatherForecast": "2-3 sentence specific weather assessment for the exact travel dates based on historical data and seasonal patterns (e.g. 'During late June in Barcelona, expect consistently sunny skies with temperatures around 80-88°F. Rain is rare but brief afternoon thunderstorms can occur 2-3 times per month.')",
   "cultureTitle": "short culture heading (e.g. 'Spanish Culture & Customs')",
   "cultureSummary": "2-3 sentence overview of local culture relevant to travelers",
-  "cultureNotes": ["array of 4-6 specific cultural tips relevant to packing and behavior"],
+  "cultureNotes": ["array of 4-6 specific cultural tips relevant to packing and behavior, e.g. dress codes for religious sites, tipping customs, dining etiquette, local fashion norms"],
   "travelLogistics": {
     "icon": "emoji for mode of transport (✈️, 🚆, or 🚗)",
     "title": "heading like 'Flying from LAX' or 'Driving from Los Angeles'",
     "summary": "2-3 sentence overview with specific arrival time recommendation and wait time estimate",
-    "tips": ["array of 3-5 specific logistics tips"]
-  },
-  "localRecommendations": {
-    "grocery": ["2-3 grocery store chains or market types common in or near the destination, with a brief note on what to find there"],
-    "pharmacy": ["2-3 pharmacy chains or drugstore types common in the destination area"],
-    "clothing": ["2-3 clothing store recommendations relevant to the trip style, activities, and destination"],
-    "restaurants": ["3-4 restaurant or cuisine recommendations popular at the destination, mentioning cuisine type and what to try"]
+    "tips": ["array of 3-5 specific logistics tips, e.g. TSA PreCheck lines, terminal info, traffic patterns, luggage policies"]
   },
   "travelerGuides": [
     {
       "travelerLabel": "traveler label from the list above",
-      "clothingEssentials": ["array of 6-10 clothing items to pack, gender-appropriate and activity-specific"],
-      "travelEssentials": ["array of 4-6 travel/tech/document/bag essentials (passport, phone charger, power bank, reusable bag, etc.)"],
-      "toiletryEssentials": ["array of 4-6 toiletry and personal care essentials appropriate for the destination and accommodation"],
-      "recommended": ["array of 4-6 recommended but optional items"],
+      "essentials": ["array of 8-12 essential items to pack, gender-appropriate"],
+      "recommended": ["array of 5-8 recommended but optional items"],
       "tips": ["array of 3-4 personalized packing tips"]
     }
   ]
