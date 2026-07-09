@@ -1553,7 +1553,7 @@ function initFeedbackForm() {
   });
 }
 
-function submitFeedback() {
+async function submitFeedback() {
   state.feedback.commentEase = document.getElementById('comment-ease')?.value || '';
   state.feedback.commentSatisfaction = document.getElementById('comment-satisfaction')?.value || '';
   state.feedback.commentRecommend = document.getElementById('comment-recommend')?.value || '';
@@ -1563,20 +1563,27 @@ function submitFeedback() {
     return;
   }
 
-  // Save feedback to localStorage
-  const feedbackData = {
-    savedAt: new Date().toISOString(),
-    destination: state.tripParams.destination,
-    ...state.feedback,
-  };
-  const allFeedback = JSON.parse(localStorage.getItem('packsmart_feedback') || '[]');
-  allFeedback.unshift(feedbackData);
-  if (allFeedback.length > 20) allFeedback.length = 20;
-  try { localStorage.setItem('packsmart_feedback', JSON.stringify(allFeedback)); } catch (e) { /* ignore */ }
+  const submitBtn = document.getElementById('submit-feedback-btn');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
+
+  try {
+    await apiPost('/api/submit-feedback', {
+      ease: state.feedback.ease,
+      satisfaction: state.feedback.satisfaction,
+      recommend: state.feedback.recommend,
+      commentEase: state.feedback.commentEase,
+      commentSatisfaction: state.feedback.commentSatisfaction,
+      commentRecommend: state.feedback.commentRecommend,
+      destination: state.tripParams.destination,
+    });
+  } catch (e) {
+    showToast('Could not save feedback to server — please try again.', true);
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Feedback'; }
+    return;
+  }
 
   const formContainer = document.getElementById('feedback-form-container');
   const submittedMsg = document.getElementById('feedback-submitted');
-  const submitBtn = document.getElementById('submit-feedback-btn');
   const newTripBtn = document.getElementById('new-trip-after-feedback-btn');
   if (formContainer) formContainer.style.display = 'none';
   if (submittedMsg) submittedMsg.style.display = 'block';
