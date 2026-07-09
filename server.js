@@ -1,9 +1,19 @@
 require('dotenv').config();
 const express = require('express');
 const Anthropic = require('@anthropic-ai/sdk');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+const FEEDBACK_FILE = path.join(__dirname, 'feedback_data.csv');
+const FEEDBACK_KEY = process.env.FEEDBACK_KEY || 'packsmart-feedback-2026';
+
+// Initialize CSV with headers if it doesn't exist
+if (!fs.existsSync(FEEDBACK_FILE)) {
+  fs.writeFileSync(FEEDBACK_FILE, 'Date Submitted,Question,Rating,Comments\n', 'utf8');
+}
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static('public'));
@@ -266,6 +276,49 @@ Create ${Math.min(tripParams.duration, 7)} outfits covering different occasions.
     console.error('get-outfits error:', err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// Submit feedback — appends 3 rows (one per question) to the CSV
+app.post('/api/submit-feedback', (req, res) => {
+  try {
+    const { ease, satisfaction, recommend, commentEase, commentSatisfaction, commentRecommend, destination } = req.body;
+
+    if (!ease || !satisfaction || !recommend) {
+      return res.status(400).json({ error: 'All three ratings are required' });
+    }
+
+    const dateStr = new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' });
+
+    function csvRow(date, question, rating, comment) {
+      const safe = (v) => `"${String(v || '').replace(/"/g, '""')}"`;
+      return `${safe(date)},${safe(question)},${rating},${safe(comment)}\n`;
+    }
+
+    const rows = [
+      csvRow(dateStr, 'Ease of Use', ease, commentEase),
+      csvRow(dateStr, 'Overall Satisfaction', satisfaction, commentSatisfaction),
+      csvRow(dateStr, 'Likelihood to Recommend', recommend, commentRecommend),
+    ].join('');
+
+    fs.appendFileSync(FEEDBACK_FILE, rows, 'utf8');
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('submit-feedback error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Download feedback CSV — protected by FEEDBACK_KEY
+app.get('/api/feedback-download', (req, res) => {
+  if (req.query.key !== FEEDBACK_KEY) {
+    return res.status(403).send('Forbidden');
+  }
+  if (!fs.existsSync(FEEDBACK_FILE)) {
+    return res.status(404).send('No feedback data yet');
+  }
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="PackSmart Feedback.csv"');
+  res.sendFile(FEEDBACK_FILE);
 });
 
 const PORT = process.env.PORT || 3000;
