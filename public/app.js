@@ -19,6 +19,7 @@ const state = {
     startDate: '',
     endDate: '',
     season: '',
+    accommodation: '',
     interests: [],
     hasLaundromat: false,
     transportMode: '',
@@ -26,11 +27,12 @@ const state = {
   },
   activeTravelers: ['self'],
   travelers: {
-    self: { gender: '', luggageSize: '', items: [], packingAnalysis: null, outfits: null },
+    self: { gender: '', luggageSize: '', items: [], wardrobeChoice: '', packingAnalysis: null, outfits: null },
   },
   packingGuide: null,
   activeWardrobeTab: 'self',
   activeOutfitsTab: 'self',
+  feedback: { ease: 0, satisfaction: 0, recommend: 0, commentEase: '', commentSatisfaction: '', commentRecommend: '' },
 };
 
 let itemIdCounter = 0;
@@ -103,7 +105,7 @@ function showToast(msg, isError = false) {
 // ===== Traveler Management =====
 function getTraveler(key) {
   if (!state.travelers[key]) {
-    state.travelers[key] = { gender: '', luggageSize: '', items: [], packingAnalysis: null, outfits: null };
+    state.travelers[key] = { gender: '', luggageSize: '', items: [], wardrobeChoice: '', packingAnalysis: null, outfits: null };
   }
   return state.travelers[key];
 }
@@ -398,6 +400,7 @@ async function goToStep(step) {
 
   if (step === 4) renderWardrobeTabs();
   if (step === 5) renderOutfitsTabs();
+  if (step === 7) initFeedbackForm();
 
   renderStep(step);
 }
@@ -427,13 +430,19 @@ function validateStep(step) {
   if (step === 4) {
     for (const key of state.activeTravelers) {
       const t = getTraveler(key);
-      if (t.items.length === 0) {
-        showToast(`Please add at least one item for ${TRAVELER_DEFS[key].label}.`, true);
+      if (!t.wardrobeChoice) {
+        showToast(`Please choose whether to upload photos for ${TRAVELER_DEFS[key].label}.`, true);
         return false;
       }
-      if (t.items.some(i => !i.analysis)) {
-        showToast(`Please wait for all items to finish analyzing for ${TRAVELER_DEFS[key].label}.`, true);
-        return false;
+      if (t.wardrobeChoice === 'upload') {
+        if (t.items.length === 0) {
+          showToast(`Please add at least one item for ${TRAVELER_DEFS[key].label}, or choose "No photos to upload".`, true);
+          return false;
+        }
+        if (t.items.some(i => !i.analysis)) {
+          showToast(`Please wait for all items to finish analyzing for ${TRAVELER_DEFS[key].label}.`, true);
+          return false;
+        }
       }
     }
   }
@@ -447,6 +456,7 @@ function collectTripParams(peek = false) {
     startDate: document.getElementById('start-date').value,
     endDate: document.getElementById('end-date').value,
     season: document.getElementById('season').value,
+    accommodation: document.getElementById('accommodation').value,
     interests: [...document.querySelectorAll('#interests-grid input:checked')].map(el => el.value),
     hasLaundromat: document.getElementById('laundromat').checked,
     transportMode: state.tripParams.transportMode,
@@ -635,21 +645,41 @@ function renderPackingGuide(data) {
     html += `
       <div class="traveler-guide-card">
         <h3 class="traveler-guide-heading">${guide.travelerLabel}</h3>
-        ${guide.essentials ? `
+        ${guide.clothingEssentials && guide.clothingEssentials.length ? `
         <div class="guide-section">
-          <h4>Essentials to Pack</h4>
+          <h4>👕 Clothing Essentials</h4>
+          <ul class="guide-list">
+            ${guide.clothingEssentials.map(item => `<li><span class="guide-check">✓</span> ${item}</li>`).join('')}
+          </ul>
+        </div>` : (guide.essentials && guide.essentials.length ? `
+        <div class="guide-section">
+          <h4>✓ Essentials to Pack</h4>
           <ul class="guide-list">
             ${guide.essentials.map(item => `<li><span class="guide-check">✓</span> ${item}</li>`).join('')}
           </ul>
+        </div>` : '')}
+        ${guide.travelEssentials && guide.travelEssentials.length ? `
+        <div class="guide-section">
+          <h4>🎒 Travel Essentials</h4>
+          <ul class="guide-list">
+            ${guide.travelEssentials.map(item => `<li><span class="guide-check">✓</span> ${item}</li>`).join('')}
+          </ul>
         </div>` : ''}
-        ${guide.recommended ? `
+        ${guide.toiletryEssentials && guide.toiletryEssentials.length ? `
+        <div class="guide-section">
+          <h4>🧴 Toiletry Essentials</h4>
+          <ul class="guide-list">
+            ${guide.toiletryEssentials.map(item => `<li><span class="guide-check">✓</span> ${item}</li>`).join('')}
+          </ul>
+        </div>` : ''}
+        ${guide.recommended && guide.recommended.length ? `
         <div class="guide-section">
           <h4>Recommended</h4>
           <ul class="guide-list">
             ${guide.recommended.map(item => `<li><span class="guide-dot">●</span> ${item}</li>`).join('')}
           </ul>
         </div>` : ''}
-        ${guide.tips ? `
+        ${guide.tips && guide.tips.length ? `
         <div class="guide-section">
           <h4>Tips</h4>
           <ul class="guide-list tips">
@@ -661,6 +691,22 @@ function renderPackingGuide(data) {
   }
 
   container.innerHTML = html;
+}
+
+// ===== Print Packing Guide =====
+function printPackingGuide() {
+  const content = document.getElementById('packing-guide-content');
+  if (!content || !content.innerHTML.trim() || content.querySelector('.empty-state')) {
+    showToast('Please generate a packing guide first.', true);
+    return;
+  }
+  const p = state.tripParams;
+  document.getElementById('print-report').innerHTML = `
+    <h1>PackSmart — Packing Guide</h1>
+    <p><strong>Destination:</strong> ${p.destination} &nbsp; <strong>Duration:</strong> ${p.duration} days &nbsp; <strong>Season:</strong> ${p.season}</p>
+    ${content.innerHTML}
+  `;
+  window.print();
 }
 
 // ===== Step 4: Wardrobe (per-traveler) =====
@@ -678,6 +724,11 @@ function switchWardrobeTab(key) {
   renderWardrobeContent(key);
 }
 
+function setWardrobeChoice(travelerKey, choice) {
+  getTraveler(travelerKey).wardrobeChoice = choice;
+  renderWardrobeContent(travelerKey);
+}
+
 function renderWardrobeContent(travelerKey) {
   const container = document.getElementById('wardrobe-tab-content');
   const traveler = getTraveler(travelerKey);
@@ -685,6 +736,37 @@ function renderWardrobeContent(travelerKey) {
   const isPet = travelerKey === 'pet';
   const itemLabel = isPet ? 'pet items' : 'clothing items';
 
+  // Show choice if not yet made
+  if (!traveler.wardrobeChoice) {
+    container.innerHTML = `
+      <div class="wardrobe-choice-row">
+        <div class="wardrobe-choice-card" onclick="app.setWardrobeChoice('${travelerKey}', 'upload')">
+          <div class="wardrobe-choice-icon">${isPet ? '📷' : '👕'}</div>
+          <div class="wardrobe-choice-title">Upload Photos</div>
+          <div class="wardrobe-choice-desc">Photograph or upload ${isPet ? 'pet supplies' : 'clothing items'} to get AI-powered outfit recommendations and packing analysis.</div>
+        </div>
+        <div class="wardrobe-choice-card" onclick="app.setWardrobeChoice('${travelerKey}', 'skip')">
+          <div class="wardrobe-choice-icon">⏭️</div>
+          <div class="wardrobe-choice-title">No Photos to Upload</div>
+          <div class="wardrobe-choice-desc">Skip photo upload for ${def.label}. You'll still receive packing guide recommendations above.</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  if (traveler.wardrobeChoice === 'skip') {
+    container.innerHTML = `
+      <div class="wardrobe-skipped">
+        <div class="empty-icon">⏭️</div>
+        <p>No photos will be uploaded for <strong>${def.label}</strong>.</p>
+        <button class="btn-outline" style="margin-top:12px;" onclick="app.setWardrobeChoice('${travelerKey}', '')">Change Choice</button>
+      </div>
+    `;
+    return;
+  }
+
+  // Upload mode
   let html = `
     <div class="wardrobe-for-traveler" data-traveler="${travelerKey}">
       <div class="add-item-buttons">
@@ -693,6 +775,9 @@ function renderWardrobeContent(travelerKey) {
         </button>
         <button class="btn-outline" onclick="document.getElementById('file-input-${travelerKey}').click()">
           📁 Upload Photo
+        </button>
+        <button class="btn-outline" onclick="app.setWardrobeChoice('${travelerKey}', '')">
+          ↩ Change Choice
         </button>
         <input type="file" id="camera-input-${travelerKey}" accept="image/*" capture="environment" style="display:none"
           onchange="app.handleFileInput(this, '${travelerKey}')" />
@@ -780,9 +865,12 @@ function deleteItem(travelerKey, id) {
 
 // ===== Step 5: Analysis & Outfits (per-traveler) =====
 async function runAnalysisAndOutfits() {
+  const travelersWithPhotos = state.activeTravelers.filter(k => getTraveler(k).wardrobeChoice === 'upload' && getTraveler(k).items.length > 0);
+  if (travelersWithPhotos.length === 0) return;
+
   showLoading('Analyzing packing and generating outfit recommendations…');
   try {
-    for (const key of state.activeTravelers) {
+    for (const key of travelersWithPhotos) {
       const traveler = getTraveler(key);
       const itemAnalyses = traveler.items.map(i => i.analysis);
       const travelerParams = {
@@ -840,6 +928,11 @@ function renderOutfitsContent(travelerKey) {
   const traveler = getTraveler(travelerKey);
   const analysis = traveler.packingAnalysis;
   const outfitsData = traveler.outfits;
+
+  if (traveler.wardrobeChoice === 'skip') {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">⏭️</div><p>No photos were uploaded for this traveler. Refer to the Packing Guide (Step 3) for personalized packing recommendations.</p></div>`;
+    return;
+  }
 
   if (!analysis && !outfitsData) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">👗</div><p>No results available yet.</p></div>`;
@@ -964,6 +1057,7 @@ function renderFinalReport() {
         <tr><td>Duration</td><td>${p.duration} days</td></tr>
         <tr><td>Season</td><td>${p.season}</td></tr>
         <tr><td>Activities</td><td>${p.interests.join(', ')}</td></tr>
+        ${p.accommodation ? `<tr><td>Accommodation</td><td>${p.accommodation}</td></tr>` : ''}
         <tr><td>Laundromat</td><td>${p.hasLaundromat ? 'Yes' : 'No'}</td></tr>
         ${p.transportMode ? `<tr><td>Transportation</td><td>${p.transportMode === 'flying' ? '✈️ Flying' : p.transportMode === 'train' ? '🚆 Train' : '🚗 Driving'}${p.transportDetails.airport ? ` from ${p.transportDetails.airport}` : ''}${p.transportDetails.station ? ` from ${p.transportDetails.station}` : ''}${p.transportDetails.departureCity ? ` from ${p.transportDetails.departureCity}` : ''}${p.transportDetails.departureTime ? ` at ${p.transportDetails.departureTime}` : ''}</td></tr>` : ''}
         <tr><td>Travelers</td><td>${state.activeTravelers.map(k => TRAVELER_DEFS[k].label).join(', ')}</td></tr>
@@ -978,6 +1072,49 @@ function renderFinalReport() {
         <p>${guide.climateSummary || ''}</p>
       </div>
     `;
+
+    if (guide.localRecommendations) {
+      const lr = guide.localRecommendations;
+      html += `
+        <div class="report-section">
+          <h3>📍 Local Recommendations near ${p.destination}</h3>
+          <div class="local-recs-grid">
+            ${lr.grocery && lr.grocery.length ? `
+            <div class="local-rec-card">
+              <div class="local-rec-icon">🛒</div>
+              <div class="local-rec-body">
+                <h4>Grocery Stores</h4>
+                <ul>${lr.grocery.map(r => `<li>${r}</li>`).join('')}</ul>
+              </div>
+            </div>` : ''}
+            ${lr.pharmacy && lr.pharmacy.length ? `
+            <div class="local-rec-card">
+              <div class="local-rec-icon">💊</div>
+              <div class="local-rec-body">
+                <h4>Pharmacies</h4>
+                <ul>${lr.pharmacy.map(r => `<li>${r}</li>`).join('')}</ul>
+              </div>
+            </div>` : ''}
+            ${lr.clothing && lr.clothing.length ? `
+            <div class="local-rec-card">
+              <div class="local-rec-icon">👗</div>
+              <div class="local-rec-body">
+                <h4>Clothing Stores</h4>
+                <ul>${lr.clothing.map(r => `<li>${r}</li>`).join('')}</ul>
+              </div>
+            </div>` : ''}
+            ${lr.restaurants && lr.restaurants.length ? `
+            <div class="local-rec-card">
+              <div class="local-rec-icon">🍽️</div>
+              <div class="local-rec-body">
+                <h4>Restaurants & Dining</h4>
+                <ul>${lr.restaurants.map(r => `<li>${r}</li>`).join('')}</ul>
+              </div>
+            </div>` : ''}
+          </div>
+        </div>
+      `;
+    }
   }
 
   for (const key of state.activeTravelers) {
@@ -989,6 +1126,26 @@ function renderFinalReport() {
     html += `<div class="report-traveler-section">`;
     html += `<h3>${def.icon} ${def.label}</h3>`;
     html += `<p><strong>Gender:</strong> ${traveler.gender || 'N/A'} &nbsp; <strong>Luggage:</strong> ${traveler.luggageSize}</p>`;
+
+    // Packing guide sections from AI guide
+    if (guide) {
+      const guideEntry = (guide.travelerGuides || []).find(g => g.travelerLabel === def.label);
+      if (guideEntry) {
+        html += `<div class="report-packing-sections">`;
+        if (guideEntry.clothingEssentials && guideEntry.clothingEssentials.length) {
+          html += `<h4>👕 Clothing Essentials</h4><ul>${guideEntry.clothingEssentials.map(i => `<li>${i}</li>`).join('')}</ul>`;
+        } else if (guideEntry.essentials && guideEntry.essentials.length) {
+          html += `<h4>✓ Essentials</h4><ul>${guideEntry.essentials.map(i => `<li>${i}</li>`).join('')}</ul>`;
+        }
+        if (guideEntry.travelEssentials && guideEntry.travelEssentials.length) {
+          html += `<h4>🎒 Travel Essentials</h4><ul>${guideEntry.travelEssentials.map(i => `<li>${i}</li>`).join('')}</ul>`;
+        }
+        if (guideEntry.toiletryEssentials && guideEntry.toiletryEssentials.length) {
+          html += `<h4>🧴 Toiletry Essentials</h4><ul>${guideEntry.toiletryEssentials.map(i => `<li>${i}</li>`).join('')}</ul>`;
+        }
+        html += `</div>`;
+      }
+    }
 
     // Item photos
     if (traveler.items.length > 0) {
@@ -1148,6 +1305,7 @@ function loadTrip(index) {
   document.getElementById('start-date').value = state.tripParams.startDate || '';
   document.getElementById('end-date').value = state.tripParams.endDate || '';
   document.getElementById('season').value = state.tripParams.season;
+  document.getElementById('accommodation').value = state.tripParams.accommodation || '';
   document.getElementById('laundromat').checked = state.tripParams.hasLaundromat;
   document.getElementById('laundromat-label').textContent = state.tripParams.hasLaundromat ? 'Yes' : 'No';
 
@@ -1207,9 +1365,10 @@ function deleteTrip(index) {
 // ===== Start Over =====
 function startOver() {
   state.currentStep = 1;
-  state.tripParams = { destination: '', duration: 0, startDate: '', endDate: '', season: '', interests: [], hasLaundromat: false, transportMode: '', transportDetails: {} };
+  state.tripParams = { destination: '', duration: 0, startDate: '', endDate: '', season: '', accommodation: '', interests: [], hasLaundromat: false, transportMode: '', transportDetails: {} };
   state.activeTravelers = ['self'];
-  state.travelers = { self: { gender: '', luggageSize: '', items: [], packingAnalysis: null, outfits: null } };
+  state.travelers = { self: { gender: '', luggageSize: '', items: [], wardrobeChoice: '', packingAnalysis: null, outfits: null } };
+  state.feedback = { ease: 0, satisfaction: 0, recommend: 0, commentEase: '', commentSatisfaction: '', commentRecommend: '' };
   state.packingGuide = null;
   state.activeWardrobeTab = 'self';
   state.activeOutfitsTab = 'self';
@@ -1220,6 +1379,7 @@ function startOver() {
   document.getElementById('start-date').value = '';
   document.getElementById('end-date').value = '';
   document.getElementById('season').value = '';
+  document.getElementById('accommodation').value = '';
   document.getElementById('laundromat').checked = false;
   document.getElementById('laundromat-label').textContent = 'No';
   document.querySelectorAll('#interests-grid input').forEach(el => { el.checked = false; el.closest('.pill').classList.remove('selected'); });
@@ -1359,6 +1519,71 @@ function addCalendarReminders(provider) {
   showToast(`${provider === 'google' ? 'Google Calendar' : 'Outlook'} events opening — save them to get reminders!`);
 }
 
+// ===== Feedback =====
+function initFeedbackForm() {
+  const categories = ['ease', 'satisfaction', 'recommend'];
+  const idMap = { ease: 'rating-ease', satisfaction: 'rating-satisfaction', recommend: 'rating-recommend' };
+
+  // Show form, hide submitted message
+  const formContainer = document.getElementById('feedback-form-container');
+  const submittedMsg = document.getElementById('feedback-submitted');
+  const submitBtn = document.getElementById('submit-feedback-btn');
+  const newTripBtn = document.getElementById('new-trip-after-feedback-btn');
+  if (formContainer) formContainer.style.display = 'block';
+  if (submittedMsg) submittedMsg.style.display = 'none';
+  if (submitBtn) submitBtn.style.display = 'inline-flex';
+  if (newTripBtn) newTripBtn.style.display = 'none';
+
+  categories.forEach(cat => {
+    const container = document.getElementById(idMap[cat]);
+    if (!container) return;
+    container.innerHTML = '';
+    for (let i = 1; i <= 7; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'rating-btn' + (state.feedback[cat] === i ? ' selected' : '');
+      btn.textContent = i;
+      btn.onclick = () => {
+        state.feedback[cat] = i;
+        container.querySelectorAll('.rating-btn').forEach((b, idx) => {
+          b.classList.toggle('selected', idx + 1 === i);
+        });
+      };
+      container.appendChild(btn);
+    }
+  });
+}
+
+function submitFeedback() {
+  state.feedback.commentEase = document.getElementById('comment-ease')?.value || '';
+  state.feedback.commentSatisfaction = document.getElementById('comment-satisfaction')?.value || '';
+  state.feedback.commentRecommend = document.getElementById('comment-recommend')?.value || '';
+
+  if (!state.feedback.ease || !state.feedback.satisfaction || !state.feedback.recommend) {
+    showToast('Please select a rating for each question.', true);
+    return;
+  }
+
+  // Save feedback to localStorage
+  const feedbackData = {
+    savedAt: new Date().toISOString(),
+    destination: state.tripParams.destination,
+    ...state.feedback,
+  };
+  const allFeedback = JSON.parse(localStorage.getItem('packsmart_feedback') || '[]');
+  allFeedback.unshift(feedbackData);
+  if (allFeedback.length > 20) allFeedback.length = 20;
+  try { localStorage.setItem('packsmart_feedback', JSON.stringify(allFeedback)); } catch (e) { /* ignore */ }
+
+  const formContainer = document.getElementById('feedback-form-container');
+  const submittedMsg = document.getElementById('feedback-submitted');
+  const submitBtn = document.getElementById('submit-feedback-btn');
+  const newTripBtn = document.getElementById('new-trip-after-feedback-btn');
+  if (formContainer) formContainer.style.display = 'none';
+  if (submittedMsg) submittedMsg.style.display = 'block';
+  if (submitBtn) submitBtn.style.display = 'none';
+  if (newTripBtn) newTripBtn.style.display = 'inline-flex';
+}
+
 // ===== Public app interface =====
 const app = {
   goToStep,
@@ -1366,6 +1591,7 @@ const app = {
   deleteItem,
   startOver,
   printReport,
+  printPackingGuide,
   saveTrip,
   loadTrip,
   deleteTrip,
@@ -1380,6 +1606,8 @@ const app = {
   toggleCalendarMenu,
   switchWardrobeTab,
   switchOutfitsTab,
+  setWardrobeChoice,
+  submitFeedback,
 };
 
 // ===== Init =====
