@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PackSmart — Your Travel Packing Assistant</title>
   <meta property="og:title" content="PackSmart — Your Travel Packing Assistant" />
-  <meta property="og:description" content="Your trip, packed your way" />
+  <meta property="og:description" content="Your trip, styled your way" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://packsmart-production.up.railway.app/" />
-  <meta name="description" content="Your trip, packed your way" />
+  <meta name="description" content="Your trip, styled your way" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -23,7 +23,7 @@
         <span class="logo-icon">🧳</span>
         <span class="logo-text">PackSmart</span>
       </div>
-      <p class="header-tagline">Your trip, packed your way</p>
+      <p class="header-tagline">Your trip, styled your way</p>
     </div>
   </header>
 
@@ -59,6 +59,11 @@
         <div class="step-indicator" data-step="6">
           <div class="step-dot"><span>6</span></div>
           <div class="step-label">Report</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-indicator" data-step="7">
+          <div class="step-dot"><span>7</span></div>
+          <div class="step-label">Feedback</div>
         </div>
       </div>
     </div>
@@ -97,6 +102,17 @@
               <option>Summer</option>
               <option>Autumn</option>
               <option>Winter</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="accommodation">Accommodation</label>
+            <select id="accommodation">
+              <option value="">Select accommodation…</option>
+              <option>AirBnB or VRBO</option>
+              <option>Bed &amp; Breakfast</option>
+              <option>Campsite</option>
+              <option>Family Home</option>
+              <option>Hotel</option>
             </select>
           </div>
         </div>
@@ -164,6 +180,9 @@
     <!-- Step 2: Travelers -->
     <section class="step-section" id="step-2">
       <div class="card">
+        <div class="top-back-row">
+          <button class="btn-secondary btn-sm" onclick="app.goToStep(1)">← Back to Trip Details</button>
+        </div>
         <h2 class="section-title">Who are you packing for?</h2>
         <p class="section-desc">Select everyone you're responsible for packing, choose their gender and suitcase size.</p>
 
@@ -219,9 +238,12 @@
       </div>
     </section>
 
-    <!-- Step 3: Packing Guide (AI-generated climate + what to pack per person) -->
+    <!-- Step 3: Packing Guide -->
     <section class="step-section" id="step-3">
       <div class="card">
+        <div class="top-back-row">
+          <button class="btn-secondary btn-sm" onclick="app.goToStep(2)">← Back to Travelers</button>
+        </div>
         <h2 class="section-title">Your Packing Guide</h2>
         <p class="section-desc">Based on your destination and season, here's the climate you can expect and what each traveler should plan on packing.</p>
 
@@ -234,6 +256,7 @@
 
         <div class="btn-row">
           <button class="btn-secondary" onclick="app.goToStep(2)">← Back</button>
+          <button class="btn-outline" onclick="app.printPackingGuide()">🖨️ Print / Save Guide</button>
           <button class="btn-primary" onclick="app.goToStep(4)">Upload Your Items →</button>
         </div>
       </div>
@@ -242,8 +265,19 @@
     <!-- Step 4: Wardrobe (per-traveler tabs) -->
     <section class="step-section" id="step-4">
       <div class="card">
+        <div class="top-back-row">
+          <button class="btn-secondary btn-sm" onclick="app.goToStep(3)">← Back to Packing Guide</button>
+        </div>
         <h2 class="section-title">Upload Your Items</h2>
-        <p class="section-desc">Now photograph or upload the items you're planning to pack for each traveler so we can recommend outfits.</p>
+
+        <div class="premium-notice">
+          <div class="premium-notice-icon">⭐</div>
+          <div class="premium-notice-body">
+            <strong>Premium Feature</strong> — Upload photos of your clothing items to unlock personalized outfit recommendations, trend analysis, full event-by-event styling reports, alert notifications, and local shopping recommendations including pharmacies, grocery stores, clothing stores, and restaurants near your destination.
+          </div>
+        </div>
+
+        <p class="section-desc" style="margin-top:16px;">For each traveler, choose to upload photos of items you're planning to pack or skip if you'd prefer not to upload photos.</p>
 
         <div class="traveler-tabs" id="wardrobe-tabs"></div>
 
@@ -259,6 +293,9 @@
     <!-- Step 5: Analysis & Outfit Recommendations (per-traveler tabs) -->
     <section class="step-section" id="step-5">
       <div class="card">
+        <div class="top-back-row">
+          <button class="btn-secondary btn-sm" onclick="app.goToStep(4)">← Back to Wardrobe</button>
+        </div>
         <h2 class="section-title">Analysis &amp; Outfit Recommendations</h2>
 
         <div class="traveler-tabs" id="outfits-tabs"></div>
@@ -275,6 +312,9 @@
     <!-- Step 6: Final Report -->
     <section class="step-section" id="step-6">
       <div class="card">
+        <div class="top-back-row">
+          <button class="btn-secondary btn-sm" onclick="app.goToStep(5)">← Back to Outfits</button>
+        </div>
         <h2 class="section-title">Your PackSmart Report</h2>
         <p class="section-desc">Review your complete packing plan below. You can save it for later, print it, or go back to make changes.</p>
 
@@ -291,12 +331,59 @@
           </div>
           <button class="btn-outline" onclick="app.saveTrip()">💾 Save Trip</button>
           <button class="btn-outline" onclick="app.printReport()">🖨️ Print / PDF</button>
+          <button class="btn-outline" onclick="app.goToStep(7)">📝 Give Feedback</button>
           <button class="btn-primary" onclick="app.startOver()">Start New Trip ✈️</button>
         </div>
 
         <div class="saved-trips-section" id="saved-trips-section" style="display:none">
           <h3 class="section-title" style="font-size:1.1rem; margin-top:28px;">Saved Trips</h3>
           <div id="saved-trips-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 7: Feedback -->
+    <section class="step-section" id="step-7">
+      <div class="card">
+        <div class="top-back-row">
+          <button class="btn-secondary btn-sm" onclick="app.goToStep(6)">← Back to Report</button>
+        </div>
+        <h2 class="section-title">Share Your Feedback</h2>
+        <p class="section-desc">Help us improve PackSmart by sharing your experience. Your responses are anonymous and greatly appreciated.</p>
+
+        <div id="feedback-form-container" class="feedback-form">
+          <div class="feedback-question">
+            <label class="feedback-label">1. Ease of Use</label>
+            <p class="feedback-sublabel">How easy was it to navigate and use PackSmart? <span class="rating-scale-hint">(1 = Very Difficult, 7 = Very Easy)</span></p>
+            <div class="rating-row" id="rating-ease"></div>
+            <textarea class="feedback-textarea" id="comment-ease" placeholder="Any comments about ease of use?"></textarea>
+          </div>
+
+          <div class="feedback-question">
+            <label class="feedback-label">2. Overall Satisfaction</label>
+            <p class="feedback-sublabel">How satisfied are you with PackSmart overall? <span class="rating-scale-hint">(1 = Very Unsatisfied, 7 = Very Satisfied)</span></p>
+            <div class="rating-row" id="rating-satisfaction"></div>
+            <textarea class="feedback-textarea" id="comment-satisfaction" placeholder="What did you like or dislike?"></textarea>
+          </div>
+
+          <div class="feedback-question">
+            <label class="feedback-label">3. Likelihood to Recommend</label>
+            <p class="feedback-sublabel">How likely are you to recommend PackSmart to a friend or family member? <span class="rating-scale-hint">(1 = Not at all likely, 7 = Extremely likely)</span></p>
+            <div class="rating-row" id="rating-recommend"></div>
+            <textarea class="feedback-textarea" id="comment-recommend" placeholder="Who would you recommend this to?"></textarea>
+          </div>
+        </div>
+
+        <div id="feedback-submitted" class="feedback-submitted" style="display:none">
+          <div class="feedback-submitted-icon">🎉</div>
+          <h3>Thank you for your feedback!</h3>
+          <p>Your input helps us make PackSmart better for every traveler.</p>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="app.goToStep(6)">← Back to Report</button>
+          <button class="btn-primary" id="submit-feedback-btn" onclick="app.submitFeedback()">Submit Feedback</button>
+          <button class="btn-primary" onclick="app.startOver()" style="display:none" id="new-trip-after-feedback-btn">Start New Trip ✈️</button>
         </div>
       </div>
     </section>
