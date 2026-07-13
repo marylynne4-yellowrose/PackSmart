@@ -1532,6 +1532,16 @@ select:focus {
 
 .feedback-submitted p { font-size: 0.9rem; color: var(--text-muted); }
 
+/* ===== Footer ===== */
+.app-footer {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+}
+
 /* ===== Printable Report ===== */
 .print-report { display: none; }
 
