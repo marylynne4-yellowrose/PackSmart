@@ -22,6 +22,12 @@ const state = {
     accommodation: '',
     interests: [],
     hasLaundromat: false,
+    multiLocation: false,
+    locations: [
+      { destination: '', startDate: '', endDate: '' },
+      { destination: '', startDate: '', endDate: '' },
+      { destination: '', startDate: '', endDate: '' },
+    ],
     transportMode: '',
     transportDetails: {},
   },
@@ -413,6 +419,13 @@ function validateStep(step) {
     if (!p.season) { showToast('Please select a season.', true); return false; }
     if (p.interests.length === 0) { showToast('Please select at least one interest.', true); return false; }
     if (!p.transportMode) { showToast('Please select a mode of transportation.', true); return false; }
+    if (p.multiLocation) {
+      const activeLocs = p.locations.filter(l => l.destination.trim());
+      if (activeLocs.length < 2) { showToast('Please enter at least 2 locations for a multi-location trip.', true); return false; }
+      for (const loc of activeLocs) {
+        if (!loc.startDate || !loc.endDate) { showToast(`Please enter arrival and departure dates for all locations.`, true); return false; }
+      }
+    }
   }
   if (step === 2) {
     for (const key of state.activeTravelers) {
@@ -459,6 +472,8 @@ function collectTripParams(peek = false) {
     accommodation: document.getElementById('accommodation').value,
     interests: [...document.querySelectorAll('#interests-grid input:checked')].map(el => el.value),
     hasLaundromat: document.getElementById('laundromat').checked,
+    multiLocation: state.tripParams.multiLocation,
+    locations: state.tripParams.locations,
     transportMode: state.tripParams.transportMode,
     transportDetails: state.tripParams.transportDetails,
   };
@@ -530,6 +545,87 @@ function updateTransportDetail(key, value) {
   state.tripParams.transportDetails[key] = value;
 }
 
+// ===== Multi-Location =====
+function setMultiLocation(enabled) {
+  state.tripParams.multiLocation = enabled;
+
+  document.getElementById('ts-single').classList.toggle('selected', !enabled);
+  document.getElementById('ts-multi').classList.toggle('selected', enabled);
+  document.querySelector('#ts-single input').checked = !enabled;
+  document.querySelector('#ts-multi input').checked = enabled;
+
+  renderMultiLocationSection();
+}
+
+function renderMultiLocationSection() {
+  const section = document.getElementById('multi-location-section');
+  if (!state.tripParams.multiLocation) {
+    section.style.display = 'none';
+    section.innerHTML = '';
+    return;
+  }
+  section.style.display = 'block';
+
+  const locs = state.tripParams.locations;
+  section.innerHTML = `
+    <div class="multi-location-wrap">
+      <p class="section-desc" style="margin-bottom:12px;">Enter each location and the dates you'll be there. Location 1 is your primary destination above.</p>
+      ${[0, 1, 2].map(i => `
+        <div class="location-row" id="location-row-${i}">
+          <div class="location-row-label">Location ${i + 1}${i === 2 ? ' <span class="label-hint">(optional)</span>' : ''}</div>
+          <div class="location-row-fields">
+            <div class="form-group">
+              <label>Destination</label>
+              <input type="text" class="loc-destination" data-idx="${i}"
+                placeholder="${i === 0 ? 'e.g. Paris, France' : i === 1 ? 'e.g. Rome, Italy' : 'e.g. Barcelona, Spain'}"
+                value="${locs[i].destination}"
+                oninput="app.updateLocation(${i}, 'destination', this.value)" />
+            </div>
+            <div class="form-group">
+              <label>Arrival Date</label>
+              <input type="date" class="loc-start" data-idx="${i}"
+                value="${locs[i].startDate}"
+                oninput="app.updateLocation(${i}, 'startDate', this.value)" />
+            </div>
+            <div class="form-group">
+              <label>Departure Date</label>
+              <input type="date" class="loc-end" data-idx="${i}"
+                value="${locs[i].endDate}"
+                oninput="app.updateLocation(${i}, 'endDate', this.value)" />
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function updateLocation(idx, field, value) {
+  state.tripParams.locations[idx][field] = value;
+
+  // Auto-sync Location 1 with main destination/dates
+  if (idx === 0) {
+    if (field === 'destination') document.getElementById('destination').value = value;
+    if (field === 'startDate') document.getElementById('start-date').value = value;
+    if (field === 'endDate') document.getElementById('end-date').value = value;
+  }
+
+  // Recalculate total duration from first start to last end
+  const locs = state.tripParams.locations.filter(l => l.startDate && l.endDate);
+  if (locs.length > 0) {
+    const starts = locs.map(l => new Date(l.startDate)).filter(d => !isNaN(d));
+    const ends = locs.map(l => new Date(l.endDate)).filter(d => !isNaN(d));
+    if (starts.length && ends.length) {
+      const minStart = new Date(Math.min(...starts));
+      const maxEnd = new Date(Math.max(...ends));
+      const days = Math.round((maxEnd - minStart) / (1000 * 60 * 60 * 24)) + 1;
+      document.getElementById('duration').value = days;
+      document.getElementById('start-date').value = minStart.toISOString().split('T')[0];
+      document.getElementById('end-date').value = maxEnd.toISOString().split('T')[0];
+    }
+  }
+}
+
 function renderStep(step) {
   document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
   document.getElementById(`step-${step}`).classList.add('active');
@@ -587,10 +683,85 @@ async function runPackingGuide() {
   }
 }
 
+function renderLocationBlock(loc) {
+  return `
+    <div class="location-guide-block">
+      <div class="location-guide-header">
+        <span class="location-guide-icon">📍</span>
+        <div>
+          <h3 class="location-guide-title">${loc.destination}</h3>
+          ${loc.dates ? `<span class="location-guide-dates">${loc.dates}</span>` : ''}
+        </div>
+      </div>
+      <div class="climate-summary-card">
+        <div class="climate-icon">${loc.climateIcon || '🌤️'}</div>
+        <div class="climate-info">
+          <h3>${loc.climate || 'Climate'}</h3>
+          <p>${loc.climateSummary || ''}</p>
+          <div class="climate-details">
+            ${loc.tempRange ? `<span class="climate-detail">🌡️ ${loc.tempRange}</span>` : ''}
+            ${loc.precipitation ? `<span class="climate-detail">💧 ${loc.precipitation}</span>` : ''}
+            ${loc.humidity ? `<span class="climate-detail">💨 ${loc.humidity}</span>` : ''}
+          </div>
+        </div>
+      </div>
+      ${loc.weatherForecast ? `
+      <div class="weather-forecast-card">
+        <div class="weather-forecast-icon">📅</div>
+        <div class="weather-forecast-info">
+          <h3>Weather Forecast</h3>
+          <p>${loc.weatherForecast}</p>
+        </div>
+      </div>` : ''}
+      ${loc.cultureTitle ? `
+      <div class="culture-summary-card">
+        <div class="culture-icon">🌍</div>
+        <div class="culture-info">
+          <h3>${loc.cultureTitle}</h3>
+          <p>${loc.cultureSummary || ''}</p>
+          ${(loc.cultureNotes || []).length ? `
+          <ul class="culture-notes">
+            ${loc.cultureNotes.map(note => `<li>${note}</li>`).join('')}
+          </ul>` : ''}
+        </div>
+      </div>` : ''}
+      ${loc.localRecommendations ? renderLocalRecsHtml(loc.localRecommendations) : ''}
+    </div>
+  `;
+}
+
+function renderLocalRecsHtml(recs) {
+  if (!recs) return '';
+  const sections = [
+    { key: 'grocery', icon: '🛒', label: 'Grocery & Markets' },
+    { key: 'pharmacy', icon: '💊', label: 'Pharmacy & Drugstore' },
+    { key: 'clothing', icon: '👕', label: 'Clothing & Shopping' },
+    { key: 'restaurants', icon: '🍽️', label: 'Dining & Restaurants' },
+  ];
+  const cards = sections.map(s => {
+    const items = recs[s.key];
+    if (!items || !items.length) return '';
+    return `<div class="local-rec-card">
+      <div class="local-rec-icon">${s.icon}</div>
+      <div class="local-rec-body"><h4>${s.label}</h4><ul>${items.map(i => `<li>${i}</li>`).join('')}</ul></div>
+    </div>`;
+  }).filter(Boolean).join('');
+  if (!cards) return '';
+  return `<div class="local-recs-section"><h4 class="local-recs-title">📌 Local Recommendations</h4><div class="local-recs-grid">${cards}</div></div>`;
+}
+
 function renderPackingGuide(data) {
   const container = document.getElementById('packing-guide-content');
 
-  let html = `
+  let html = '';
+
+  // Multi-location: render per-stop climate/culture/recs blocks
+  if (data.locationGuides && data.locationGuides.length > 0) {
+    html += `<h3 class="section-subheading">Your Destinations</h3>`;
+    html += data.locationGuides.map(loc => renderLocationBlock(loc)).join('');
+  } else {
+    // Single location
+    html += `
     <div class="climate-summary-card">
       <div class="climate-icon">${data.climateIcon || '🌤️'}</div>
       <div class="climate-info">
@@ -613,19 +784,6 @@ function renderPackingGuide(data) {
       </div>
     </div>` : ''}
 
-    ${data.travelLogistics ? `
-    <div class="logistics-card">
-      <div class="logistics-icon">${data.travelLogistics.icon || '🚏'}</div>
-      <div class="logistics-info">
-        <h3>${data.travelLogistics.title || 'Travel Logistics'}</h3>
-        <p>${data.travelLogistics.summary || ''}</p>
-        ${(data.travelLogistics.tips || []).length ? `
-        <ul class="logistics-tips">
-          ${data.travelLogistics.tips.map(tip => `<li>${tip}</li>`).join('')}
-        </ul>` : ''}
-      </div>
-    </div>` : ''}
-
     ${data.cultureTitle ? `
     <div class="culture-summary-card">
       <div class="culture-icon">🌍</div>
@@ -638,7 +796,23 @@ function renderPackingGuide(data) {
         </ul>` : ''}
       </div>
     </div>` : ''}
+
+    ${data.localRecommendations ? renderLocalRecsHtml(data.localRecommendations) : ''}
   `;
+  }
+
+  html += `${data.travelLogistics ? `
+    <div class="logistics-card">
+      <div class="logistics-icon">${data.travelLogistics.icon || '🚏'}</div>
+      <div class="logistics-info">
+        <h3>${data.travelLogistics.title || 'Travel Logistics'}</h3>
+        <p>${data.travelLogistics.summary || ''}</p>
+        ${(data.travelLogistics.tips || []).length ? `
+        <ul class="logistics-tips">
+          ${data.travelLogistics.tips.map(tip => `<li>${tip}</li>`).join('')}
+        </ul>` : ''}
+      </div>
+    </div>` : ''}`;
 
   const guides = data.travelerGuides || [];
   for (const guide of guides) {
@@ -1306,6 +1480,22 @@ function loadTrip(index) {
   document.getElementById('end-date').value = state.tripParams.endDate || '';
   document.getElementById('season').value = state.tripParams.season;
   document.getElementById('accommodation').value = state.tripParams.accommodation || '';
+  // Restore multi-location UI
+  if (state.tripParams.multiLocation) {
+    setMultiLocation(true);
+    renderMultiLocationSection();
+    // Re-populate location fields
+    state.tripParams.locations.forEach((loc, i) => {
+      const destEl = document.querySelector(`.loc-destination[data-idx="${i}"]`);
+      const startEl = document.querySelector(`.loc-start[data-idx="${i}"]`);
+      const endEl = document.querySelector(`.loc-end[data-idx="${i}"]`);
+      if (destEl) destEl.value = loc.destination;
+      if (startEl) startEl.value = loc.startDate;
+      if (endEl) endEl.value = loc.endDate;
+    });
+  } else {
+    setMultiLocation(false);
+  }
   document.getElementById('laundromat').checked = state.tripParams.hasLaundromat;
   document.getElementById('laundromat-label').textContent = state.tripParams.hasLaundromat ? 'Yes' : 'No';
 
@@ -1365,7 +1555,8 @@ function deleteTrip(index) {
 // ===== Start Over =====
 function startOver() {
   state.currentStep = 1;
-  state.tripParams = { destination: '', duration: 0, startDate: '', endDate: '', season: '', accommodation: '', interests: [], hasLaundromat: false, transportMode: '', transportDetails: {} };
+  state.tripParams = { destination: '', duration: 0, startDate: '', endDate: '', season: '', accommodation: '', interests: [], hasLaundromat: false, multiLocation: false, locations: [{ destination: '', startDate: '', endDate: '' }, { destination: '', startDate: '', endDate: '' }, { destination: '', startDate: '', endDate: '' }], transportMode: '', transportDetails: {} };
+  setMultiLocation(false);
   state.activeTravelers = ['self'];
   state.travelers = { self: { gender: '', luggageSize: '', items: [], wardrobeChoice: '', packingAnalysis: null, outfits: null } };
   state.feedback = { ease: 0, satisfaction: 0, recommend: 0, commentEase: '', commentSatisfaction: '', commentRecommend: '' };
@@ -1615,6 +1806,8 @@ const app = {
   switchOutfitsTab,
   setWardrobeChoice,
   submitFeedback,
+  setMultiLocation,
+  updateLocation,
 };
 
 // ===== Init =====

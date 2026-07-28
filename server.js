@@ -87,12 +87,61 @@ app.post('/api/packing-guide', async (req, res) => {
         : `- ${t.label}: gender: ${t.gender}, luggage: ${t.luggageSize}`
     ).join('\n');
 
+    const isMultiLocation = tripParams.multiLocation && Array.isArray(tripParams.locations);
+    const activeLocations = isMultiLocation
+      ? tripParams.locations.filter(l => l.destination && l.startDate && l.endDate)
+      : null;
+
+    const locationContext = isMultiLocation && activeLocations.length > 1
+      ? `This is a multi-location trip with ${activeLocations.length} stops:\n${activeLocations.map((l, i) => `  Stop ${i + 1}: ${l.destination} (${l.startDate} to ${l.endDate})`).join('\n')}`
+      : `- Destination: ${tripParams.destination}
+- Duration: ${tripParams.duration} days
+${tripParams.startDate && tripParams.endDate ? `- Travel dates: ${tripParams.startDate} to ${tripParams.endDate}` : ''}`;
+
+    const multiLocationJsonFields = isMultiLocation && activeLocations.length > 1 ? `
+  "locationGuides": [
+    {
+      "destination": "location name",
+      "dates": "date range string e.g. 'June 1–5'",
+      "climate": "climate type name",
+      "climateIcon": "single weather emoji",
+      "climateSummary": "2-3 sentence weather description",
+      "tempRange": "expected temperature range",
+      "precipitation": "precipitation expectation",
+      "humidity": "humidity level",
+      "weatherForecast": "2-3 sentence date-specific weather assessment",
+      "cultureTitle": "short culture heading",
+      "cultureSummary": "2-3 sentence cultural overview",
+      "cultureNotes": ["array of 3-5 cultural tips relevant to packing and behavior"],
+      "localRecommendations": {
+        "grocery": ["1-2 grocery or market recommendations"],
+        "pharmacy": ["1-2 pharmacy recommendations"],
+        "clothing": ["1-2 clothing store recommendations"],
+        "restaurants": ["2-3 restaurant or cuisine recommendations"]
+      }
+    }
+  ],` : `
+  "climate": "climate type name (e.g. 'Mediterranean', 'Tropical', 'Temperate')",
+  "climateIcon": "single weather emoji representing the climate",
+  "climateSummary": "2-3 sentence description of weather conditions they can expect",
+  "tempRange": "expected temperature range (e.g. '72-88°F / 22-31°C')",
+  "precipitation": "precipitation expectation (e.g. 'Low chance of rain')",
+  "humidity": "humidity level (e.g. 'Moderate humidity')",
+  "weatherForecast": "2-3 sentence specific weather assessment for the exact travel dates based on historical data and seasonal patterns",
+  "cultureTitle": "short culture heading (e.g. 'Spanish Culture & Customs')",
+  "cultureSummary": "2-3 sentence overview of local culture relevant to travelers",
+  "cultureNotes": ["array of 4-6 specific cultural tips relevant to packing and behavior"],
+  "localRecommendations": {
+    "grocery": ["2-3 grocery store chains or market types common in or near the destination, with a brief note on what to find there"],
+    "pharmacy": ["2-3 pharmacy chains or drugstore types common in the destination area"],
+    "clothing": ["2-3 clothing store recommendations relevant to the trip style, activities, and destination"],
+    "restaurants": ["3-4 restaurant or cuisine recommendations popular at the destination, mentioning cuisine type and what to try"]
+  },`;
+
     const prompt = `You are a professional travel packing consultant and climate expert.
 
 Trip details:
-- Destination: ${tripParams.destination}
-- Duration: ${tripParams.duration} days
-${tripParams.startDate && tripParams.endDate ? `- Travel dates: ${tripParams.startDate} to ${tripParams.endDate}` : ''}
+${locationContext}
 - Season: ${tripParams.season}
 - Interests/Activities: ${tripParams.interests.join(', ')}
 - Laundromat access: ${tripParams.hasLaundromat ? 'Yes' : 'No'}
@@ -106,7 +155,10 @@ ${tripParams.transportDetails?.departureTime ? `- Departure time: ${tripParams.t
 Travelers:
 ${travelerDescriptions}
 
-Based on the destination, season, and specific travel dates (if provided), determine the expected climate and provide a weather assessment for those exact dates — including what the weather will most likely be or is historically known to be during that time of year. Also provide cultural information relevant to packing and travel (dress codes, customs, etiquette, local norms).
+${isMultiLocation && activeLocations.length > 1
+  ? `For each stop in this multi-location trip, provide a separate climate analysis, weather forecast, culture notes, and local recommendations tailored to that specific destination and date range. Then provide combined traveler packing guides that account for all locations — packing for the full trip considering all climates and activities.`
+  : `Based on the destination, season, and specific travel dates (if provided), determine the expected climate and provide a weather assessment for those exact dates. Also provide cultural information relevant to packing and travel (dress codes, customs, etiquette, local norms).`
+}
 
 If transportation mode is provided, include travel logistics advice:
 - For FLYING: Based on the departure airport and time, provide TSA security wait time estimates (typical and peak), recommend what time to arrive at the airport, and note any airport-specific tips (terminal info, pre-check availability). Consider time of day, day of week, and season for wait time estimates.
@@ -115,36 +167,18 @@ If transportation mode is provided, include travel logistics advice:
 
 Then for each traveler, provide a personalized packing guide split into three clear categories. For pets, recommend travel supplies instead of clothing.
 
-Also provide local recommendations near the destination (grocery stores, pharmacies, clothing stores, restaurants) tailored to the accommodation type and activities.
-
 Return a JSON object with exactly these fields:
-{
-  "climate": "climate type name (e.g. 'Mediterranean', 'Tropical', 'Temperate')",
-  "climateIcon": "single weather emoji representing the climate",
-  "climateSummary": "2-3 sentence description of weather conditions they can expect",
-  "tempRange": "expected temperature range (e.g. '72-88°F / 22-31°C')",
-  "precipitation": "precipitation expectation (e.g. 'Low chance of rain')",
-  "humidity": "humidity level (e.g. 'Moderate humidity')",
-  "weatherForecast": "2-3 sentence specific weather assessment for the exact travel dates based on historical data and seasonal patterns",
-  "cultureTitle": "short culture heading (e.g. 'Spanish Culture & Customs')",
-  "cultureSummary": "2-3 sentence overview of local culture relevant to travelers",
-  "cultureNotes": ["array of 4-6 specific cultural tips relevant to packing and behavior"],
+{${multiLocationJsonFields}
   "travelLogistics": {
     "icon": "emoji for mode of transport (✈️, 🚆, or 🚗)",
     "title": "heading like 'Flying from LAX' or 'Driving from Los Angeles'",
     "summary": "2-3 sentence overview with specific arrival time recommendation and wait time estimate",
     "tips": ["array of 3-5 specific logistics tips"]
   },
-  "localRecommendations": {
-    "grocery": ["2-3 grocery store chains or market types common in or near the destination, with a brief note on what to find there"],
-    "pharmacy": ["2-3 pharmacy chains or drugstore types common in the destination area"],
-    "clothing": ["2-3 clothing store recommendations relevant to the trip style, activities, and destination"],
-    "restaurants": ["3-4 restaurant or cuisine recommendations popular at the destination, mentioning cuisine type and what to try"]
-  },
   "travelerGuides": [
     {
       "travelerLabel": "traveler label from the list above",
-      "clothingEssentials": ["array of 6-10 clothing items to pack, gender-appropriate and activity-specific"],
+      "clothingEssentials": ["array of 6-10 clothing items to pack, gender-appropriate, activity-specific, and suitable for all locations on this trip"],
       "travelEssentials": ["array of 4-6 travel/tech/document/bag essentials (passport, phone charger, power bank, reusable bag, etc.)"],
       "toiletryEssentials": ["array of 4-6 toiletry and personal care essentials appropriate for the destination and accommodation"],
       "recommended": ["array of 4-6 recommended but optional items"],

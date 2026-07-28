@@ -132,8 +132,28 @@
             <label class="pill"><input type="checkbox" value="Snow Sports" /> ⛷️ Snow Sports</label>
             <label class="pill"><input type="checkbox" value="Family Visit" /> 👨‍👩‍👧 Family Visit</label>
             <label class="pill"><input type="checkbox" value="Camping" /> 🏕️ Camping</label>
+            <label class="pill"><input type="checkbox" value="White Water Rafting" /> 🚣 White Water Rafting</label>
           </div>
         </div>
+
+        <div class="form-group full-width" style="margin-bottom:20px;">
+          <label>Trip Structure</label>
+          <p class="section-desc" style="margin:4px 0 10px;">Is your trip all in one location?</p>
+          <div class="trip-structure-grid">
+            <label class="trip-structure-card selected" id="ts-single" onclick="app.setMultiLocation(false)">
+              <input type="radio" name="trip-structure" value="single" checked />
+              <span class="trip-structure-icon">📍</span>
+              <span class="trip-structure-name">One Location</span>
+            </label>
+            <label class="trip-structure-card" id="ts-multi" onclick="app.setMultiLocation(true)">
+              <input type="radio" name="trip-structure" value="multi" />
+              <span class="trip-structure-icon">🗺️</span>
+              <span class="trip-structure-name">Multiple Locations</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="multi-location-section" style="display:none"></div>
 
         <div class="form-row">
           <div class="form-group">
