@@ -33,7 +33,7 @@ const state = {
   },
   activeTravelers: ['self'],
   travelers: {
-    self: { gender: '', luggageSize: '', items: [], wardrobeChoice: '', packingAnalysis: null, outfits: null },
+    self: { gender: '', luggageSizes: [], items: [], wardrobeChoice: '', packingAnalysis: null, outfits: null },
   },
   packingGuide: null,
   activeWardrobeTab: 'self',
@@ -111,7 +111,7 @@ function showToast(msg, isError = false) {
 // ===== Traveler Management =====
 function getTraveler(key) {
   if (!state.travelers[key]) {
-    state.travelers[key] = { gender: '', luggageSize: '', items: [], wardrobeChoice: '', packingAnalysis: null, outfits: null };
+    state.travelers[key] = { gender: '', luggageSizes: [], items: [], wardrobeChoice: '', packingAnalysis: null, outfits: null };
   }
   return state.travelers[key];
 }
@@ -166,13 +166,13 @@ function renderTravelerDetailSections() {
       <div class="traveler-detail-section">
         <h3 class="traveler-detail-heading">${def.icon} ${def.label}</h3>
         ${genderHtml}
-        <label style="font-size:0.85rem;font-weight:600;">Luggage Size</label>
+        <label style="font-size:0.85rem;font-weight:600;">Luggage <span class="label-hint">(select all bags you're bringing)</span></label>
         <div class="luggage-grid" style="margin-top:6px;">
           ${luggageOptions.map(opt => `
-            <label class="luggage-card ${traveler.luggageSize === opt.value ? 'selected' : ''}">
-              <input type="radio" name="luggage-${key}" value="${opt.value}"
-                ${traveler.luggageSize === opt.value ? 'checked' : ''}
-                onchange="app.setTravelerLuggage('${key}', '${opt.value}')" />
+            <label class="luggage-card ${(traveler.luggageSizes || []).includes(opt.value) ? 'selected' : ''}">
+              <input type="checkbox" name="luggage-${key}" value="${opt.value}"
+                ${(traveler.luggageSizes || []).includes(opt.value) ? 'checked' : ''}
+                onchange="app.setTravelerLuggage('${key}', '${opt.value}', this.checked)" />
               <span class="luggage-icon">${opt.icon}</span>
               <span class="luggage-name">${opt.name}</span>
               <span class="luggage-desc">${opt.desc}</span>
@@ -188,13 +188,16 @@ function setTravelerGender(key, value) {
   getTraveler(key).gender = value;
 }
 
-function setTravelerLuggage(key, value) {
-  getTraveler(key).luggageSize = value;
-  const cards = document.querySelectorAll(`input[name="luggage-${key}"]`);
-  cards.forEach(input => {
-    const card = input.closest('.luggage-card');
-    card.classList.toggle('selected', input.value === value);
-  });
+function setTravelerLuggage(key, value, checked) {
+  const traveler = getTraveler(key);
+  if (!Array.isArray(traveler.luggageSizes)) traveler.luggageSizes = [];
+  if (checked) {
+    if (!traveler.luggageSizes.includes(value)) traveler.luggageSizes.push(value);
+  } else {
+    traveler.luggageSizes = traveler.luggageSizes.filter(v => v !== value);
+  }
+  const input = document.querySelector(`input[name="luggage-${key}"][value="${value}"]`);
+  if (input) input.closest('.luggage-card').classList.toggle('selected', checked);
 }
 
 // ===== Airport Database =====
@@ -434,8 +437,8 @@ function validateStep(step) {
         showToast(`Please select a gender for ${TRAVELER_DEFS[key].label}.`, true);
         return false;
       }
-      if (!t.luggageSize) {
-        showToast(`Please select a luggage size for ${TRAVELER_DEFS[key].label}.`, true);
+      if (!t.luggageSizes || !t.luggageSizes.length) {
+        showToast(`Please select at least one bag for ${TRAVELER_DEFS[key].label}.`, true);
         return false;
       }
     }
@@ -681,7 +684,7 @@ async function runPackingGuide() {
       return {
         label: TRAVELER_DEFS[key].label,
         gender: t.gender || 'n/a',
-        luggageSize: t.luggageSize,
+        luggageSizes: t.luggageSizes && t.luggageSizes.length ? t.luggageSizes : ['Medium'],
         isPet: key === 'pet',
       };
     });
@@ -837,6 +840,20 @@ function renderPackingGuide(data) {
     html += `
       <div class="traveler-guide-card">
         <h3 class="traveler-guide-heading">${guide.travelerLabel}</h3>
+        ${guide.bagGuides && guide.bagGuides.length ? `
+        <div class="guide-section bag-guides-section">
+          <h4>🧳 What to Pack in Each Bag</h4>
+          <div class="bag-guides-grid">
+            ${guide.bagGuides.map(bg => `
+              <div class="bag-guide-card">
+                <div class="bag-guide-name">${bg.bagName}</div>
+                <ul class="guide-list">
+                  ${(bg.items || []).map(item => `<li><span class="guide-check">✓</span> ${item}</li>`).join('')}
+                </ul>
+              </div>
+            `).join('')}
+          </div>
+        </div>` : ''}
         ${guide.clothingEssentials && guide.clothingEssentials.length ? `
         <div class="guide-section">
           <h4>👕 Clothing Essentials</h4>
@@ -1067,7 +1084,7 @@ async function runAnalysisAndOutfits() {
       const itemAnalyses = traveler.items.map(i => i.analysis);
       const travelerParams = {
         ...state.tripParams,
-        luggageSize: traveler.luggageSize,
+        luggageSize: (traveler.luggageSizes || []).join(', '),
         gender: traveler.gender,
       };
 
@@ -1317,7 +1334,7 @@ function renderFinalReport() {
 
     html += `<div class="report-traveler-section">`;
     html += `<h3>${def.icon} ${def.label}</h3>`;
-    html += `<p><strong>Gender:</strong> ${traveler.gender || 'N/A'} &nbsp; <strong>Luggage:</strong> ${traveler.luggageSize}</p>`;
+    html += `<p><strong>Gender:</strong> ${traveler.gender || 'N/A'} &nbsp; <strong>Luggage:</strong> ${(traveler.luggageSizes || []).join(', ') || 'N/A'}</p>`;
 
     // Packing guide sections from AI guide
     if (guide) {
@@ -1420,7 +1437,7 @@ function saveTrip() {
     const t = getTraveler(key);
     saveData.travelers[key] = {
       gender: t.gender,
-      luggageSize: t.luggageSize,
+      luggageSizes: t.luggageSizes || [],
       items: t.items.map(item => ({
         id: item.id,
         imageData: item.imageData,
@@ -1480,6 +1497,12 @@ function loadTrip(index) {
 
   for (const key of trip.activeTravelers) {
     state.travelers[key] = trip.travelers[key];
+    // Migrate old saved trips that stored luggageSize as a string
+    const t = state.travelers[key];
+    if (!Array.isArray(t.luggageSizes)) {
+      t.luggageSizes = t.luggageSize ? [t.luggageSize] : [];
+      delete t.luggageSize;
+    }
   }
 
   // Restore max item ID
@@ -1576,7 +1599,7 @@ function startOver() {
   state.tripParams = { destination: '', duration: 0, startDate: '', endDate: '', season: '', accommodation: '', interests: [], hasLaundromat: false, multiLocation: false, locations: [{ destination: '', startDate: '', endDate: '' }, { destination: '', startDate: '', endDate: '' }, { destination: '', startDate: '', endDate: '' }], transportMode: '', transportDetails: {} };
   setMultiLocation(false);
   state.activeTravelers = ['self'];
-  state.travelers = { self: { gender: '', luggageSize: '', items: [], wardrobeChoice: '', packingAnalysis: null, outfits: null } };
+  state.travelers = { self: { gender: '', luggageSizes: [], items: [], wardrobeChoice: '', packingAnalysis: null, outfits: null } };
   state.feedback = { ease: 0, satisfaction: 0, recommend: 0, commentEase: '', commentSatisfaction: '', commentRecommend: '' };
   state.packingGuide = null;
   state.activeWardrobeTab = 'self';
