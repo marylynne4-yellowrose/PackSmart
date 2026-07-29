@@ -554,7 +554,25 @@ function setMultiLocation(enabled) {
   document.querySelector('#ts-single input').checked = !enabled;
   document.querySelector('#ts-multi input').checked = enabled;
 
+  // Pre-fill Location 1 from the main destination field when switching to multi
+  if (enabled) {
+    const mainDest = document.getElementById('destination').value.trim();
+    const mainStart = document.getElementById('start-date').value;
+    const mainEnd = document.getElementById('end-date').value;
+    if (mainDest) state.tripParams.locations[0].destination = mainDest;
+    if (mainStart) state.tripParams.locations[0].startDate = mainStart;
+    if (mainEnd) state.tripParams.locations[0].endDate = mainEnd;
+  }
+
   renderMultiLocationSection();
+}
+
+function syncDestinationToLocation1(value) {
+  if (state.tripParams.multiLocation) {
+    state.tripParams.locations[0].destination = value;
+    const loc1Input = document.querySelector('.loc-destination[data-idx="0"]');
+    if (loc1Input) loc1Input.value = value;
+  }
 }
 
 function renderMultiLocationSection() {
@@ -1808,6 +1826,7 @@ const app = {
   submitFeedback,
   setMultiLocation,
   updateLocation,
+  syncDestinationToLocation1,
 };
 
 // ===== Init =====
