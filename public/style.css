@@ -1777,3 +1777,43 @@ select:focus {
   left: 0;
   color: var(--primary);
 }
+
+/* ===== Per-Bag Packing Guide ===== */
+.bag-guides-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.bag-guide-card {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.bag-guide-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1.5px solid var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bag-guide-name::before {
+  content: '🧳';
+  font-size: 1rem;
+}
+
+.bag-guides-section .guide-list {
+  margin-top: 0;
+}
+
+@media (max-width: 560px) {
+  .bag-guides-grid { grid-template-columns: 1fr; }
+}

@@ -81,11 +81,12 @@ app.post('/api/packing-guide', async (req, res) => {
     const { tripParams, travelers } = req.body;
     if (!tripParams || !travelers) return res.status(400).json({ error: 'tripParams and travelers are required' });
 
-    const travelerDescriptions = travelers.map(t =>
-      t.isPet
-        ? `- ${t.label}: pet, luggage: ${t.luggageSize}`
-        : `- ${t.label}: gender: ${t.gender}, luggage: ${t.luggageSize}`
-    ).join('\n');
+    const travelerDescriptions = travelers.map(t => {
+      const bags = (t.luggageSizes && t.luggageSizes.length) ? t.luggageSizes.join(' + ') : (t.luggageSize || 'Medium');
+      return t.isPet
+        ? `- ${t.label}: pet, carrier: ${bags}`
+        : `- ${t.label}: gender: ${t.gender}, bags: ${bags}`;
+    }).join('\n');
 
     const isMultiLocation = tripParams.multiLocation && Array.isArray(tripParams.locations);
     const activeLocations = isMultiLocation
@@ -165,7 +166,12 @@ If transportation mode is provided, include travel logistics advice:
 - For TRAIN: Based on the departure station and time, provide Amtrak check-in recommendations, luggage check-in timing, recommend what time to arrive at the station, and note any station-specific tips.
 - For DRIVING: Based on the departure city, destination, and departure time, provide expected traffic conditions, estimated drive time, and recommend the best departure window to avoid congestion.
 
-Then for each traveler, provide a personalized packing guide split into three clear categories. For pets, recommend travel supplies instead of clothing.
+Then for each traveler, provide a personalized packing guide. For pets, recommend travel supplies instead of clothing.
+
+Each traveler lists their specific bags (e.g. "Carry-on + Medium"). For each bag they are bringing, provide a recommended packing list. Follow these general bag guidelines:
+- Carry-on: medications, travel-size toiletries, electronics, phone charger, valuables, documents, a change of clothes, snacks
+- Small / Medium checked bag: main clothing items, shoes, full-size toiletries, accessories
+- Large / Extra Large checked bag: bulkier clothing, outerwear, extra shoes, gear for activities
 
 Return a JSON object with exactly these fields:
 {${multiLocationJsonFields}
@@ -178,7 +184,13 @@ Return a JSON object with exactly these fields:
   "travelerGuides": [
     {
       "travelerLabel": "traveler label from the list above",
-      "clothingEssentials": ["array of 6-10 clothing items to pack, gender-appropriate, activity-specific, and suitable for all locations on this trip"],
+      "bagGuides": [
+        {
+          "bagName": "bag name exactly as provided (e.g. 'Carry-on', 'Medium')",
+          "items": ["array of 6-12 specific items to pack in this bag, tailored to bag type, traveler, destination, and activities"]
+        }
+      ],
+      "clothingEssentials": ["array of 6-10 clothing items to pack overall, gender-appropriate and activity-specific"],
       "travelEssentials": ["array of 4-6 travel/tech/document/bag essentials (passport, phone charger, power bank, reusable bag, etc.)"],
       "toiletryEssentials": ["array of 4-6 toiletry and personal care essentials appropriate for the destination and accommodation"],
       "recommended": ["array of 4-6 recommended but optional items"],
