@@ -203,6 +203,13 @@ Return only valid JSON, no other text.`;
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
+      system: [
+        {
+          type: 'text',
+          text: 'You are a professional travel packing consultant and climate expert. You return only valid JSON as instructed.',
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
       messages: [{ role: 'user', content: prompt }],
     });
 
@@ -256,6 +263,7 @@ Return only valid JSON, no other text.`;
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
+      system: [{ type: 'text', text: 'You are a professional travel packing consultant. You return only valid JSON as instructed.', cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
     });
 
@@ -311,6 +319,7 @@ Create ${Math.min(tripParams.duration, 7)} outfits covering different occasions.
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
+      system: [{ type: 'text', text: 'You are a professional stylist with up-to-date knowledge of current fashion trends. You return only valid JSON as instructed.', cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: prompt }],
     });
 
