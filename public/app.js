@@ -1034,9 +1034,8 @@ async function handleFileInput(input, travelerKey) {
   if (!files.length) return;
   input.value = '';
 
-  for (const file of files) {
-    await processImageFile(file, travelerKey);
-  }
+  // Process all uploaded photos in parallel instead of sequentially
+  await Promise.all(files.map(file => processImageFile(file, travelerKey)));
 }
 
 async function processImageFile(file, travelerKey) {
@@ -1079,7 +1078,8 @@ async function runAnalysisAndOutfits() {
 
   showLoading('Analyzing packing and generating outfit recommendations…');
   try {
-    for (const key of travelersWithPhotos) {
+    // Run all travelers in parallel instead of sequentially
+    await Promise.all(travelersWithPhotos.map(async key => {
       const traveler = getTraveler(key);
       const itemAnalyses = traveler.items.map(i => i.analysis);
       const travelerParams = {
@@ -1103,7 +1103,7 @@ async function runAnalysisAndOutfits() {
 
       traveler.packingAnalysis = analysisResult;
       traveler.outfits = outfitsResult;
-    }
+    }));
   } catch (e) {
     showToast(`Analysis failed: ${e.message}`, true);
     throw e;
